@@ -51,6 +51,7 @@ public class SecurityConfig {
                                 "/api/addresses/**",
                                 "/api/orders/**",
                                 "/api/user/**",
+                                "/api/status-orders/**",
                                 "/css/**",
                                 "/js/**",
                                 "/"

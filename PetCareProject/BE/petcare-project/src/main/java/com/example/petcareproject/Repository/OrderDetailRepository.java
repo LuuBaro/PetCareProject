@@ -10,8 +10,11 @@ import java.util.List;
 
 @Repository
 public interface OrderDetailRepository extends JpaRepository<OrderDetail, Long> {
-    // Bạn có thể thêm các phương thức tùy chỉnh nếu cần
+
     List<OrderDetail> findByOrder_OrderId(Long orderId); // Thay đổi dòng này
+    // Lấy danh sách OrderDetail theo userId thông qua Order
+
     @Query("SELECT od FROM OrderDetail od WHERE od.order.user.userId = :userId")
     List<OrderDetail> findByOrderUserId(@Param("userId") Long userId);
+
 }

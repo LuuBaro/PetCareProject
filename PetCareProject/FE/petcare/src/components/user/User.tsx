@@ -3,94 +3,117 @@ import Header from "../header/Header";
 import axios from "axios";
 
 const User: React.FC = () => {
-  const [selectedTab, setSelectedTab] = useState("choXacNhan");
-  const [orders, setOrders] = useState<any[]>([]); // Khởi tạo orders là một mảng rỗng
+  const [orders, setOrders] = useState<any[]>([]);
+  const [statusOrders, setStatusOrders] = useState<any[]>([]);
 
-  // Lấy userId từ nơi bạn lưu trữ thông tin người dùng
-  const userId = localStorage.getItem("userId"); // Thay bằng cách lấy ID thực tế của người dùng
+  const userId = localStorage.getItem("userId");
 
+  // Hàm lấy đơn hàng theo userId
   const fetchOrders = async () => {
+    if (!userId) {
+      console.error("User ID không tồn tại.");
+      return;
+    }
+
     try {
-      const response = await axios.get(`/api/orders/${userId}`);
-      console.log("Fetched orders:", response.data); // Log dữ liệu nhận được từ API
-      // Kiểm tra xem dữ liệu có phải là mảng không
+      console.log("Fetching orders for userId:", userId);
+      const response = await axios.get(`http://localhost:8080/api/user/${userId}`);
+      console.log("Fetched orders:", response.data);
+
       if (Array.isArray(response.data)) {
-        setOrders(response.data);
+        // Sắp xếp đơn hàng theo ngày đặt giảm dần
+        const sortedOrders = response.data.sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
+        setOrders(sortedOrders);
       } else {
         console.error("Dữ liệu không phải là mảng:", response.data);
-        setOrders([]); // Đặt orders thành một mảng rỗng nếu dữ liệu không đúng
+        setOrders([]);
       }
     } catch (error) {
       console.error("Error fetching orders:", error);
     }
   };
 
+  // Hàm lấy danh sách trạng thái đơn hàng
+  const fetchStatusOrders = async () => {
+    try {
+      const response = await axios.get(`http://localhost:8080/api/status-orders`);
+      console.log("Fetched status orders:", response.data);
+      setStatusOrders(response.data);
+    } catch (error) {
+      console.error("Error fetching status orders:", error);
+    }
+  };
+
   useEffect(() => {
     fetchOrders();
+    fetchStatusOrders();
   }, []);
 
-  const renderContent = () => {
-    switch (selectedTab) {
-      case "choXacNhan":
-        return <div className="text-gray-500">Không có đơn hàng nào đang chờ xác nhận.</div>;
-      case "vanChuyen":
-        return <div className="text-gray-500">Đơn hàng đang vận chuyển</div>;
-      case "choGiaoHang":
-        return <div className="text-gray-500">Đơn hàng đang chờ giao hàng</div>;
-      case "hoanThanh":
-        return <div className="text-gray-500">Đơn hàng đã hoàn thành</div>;
-      case "daHuy":
-        return <div className="text-gray-500">Đơn hàng đã bị hủy</div>;
-      case "traHang":
-        return <div className="text-gray-500">Đơn hàng trả hàng/hoàn tiền</div>;
-      default:
-        return null;
+  const renderOrders = () => {
+    const statusOrdersMap = new Map(
+      statusOrders.map((status) => [status.statusOrderId, status.statusName])
+    );
+
+    if (orders.length === 0) {
+      return <div className="text-gray-500">Bạn chưa có đơn hàng nào.</div>;
     }
+
+    return orders.map((order) => {
+      const statusName = statusOrdersMap.get(order.statusOrderId) || 'Chưa xác định';
+
+      return (
+        <div key={order.orderId} className="border border-gray-300 p-6 mb-4 w-full bg-white shadow-lg rounded-lg transition-shadow hover:shadow-xl">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-bold text-[#00b7c0]">Đơn hàng #{order.orderId}</h3>
+            <span className="text-sm text-gray-500">{new Date(order.orderDate).toLocaleString()}</span> {/* Hiển thị cả ngày và giờ */}
+          </div>
+          
+          <div className="mb-4 p-4 border border-gray-200 rounded bg-gray-50">
+            <p className="font-semibold mb-2">Họ tên: <span className="font-normal">{order.fullName}</span></p>
+            <p className="font-semibold mb-2">Số điện thoại: <span className="font-normal">{order.phoneNumber}</span></p>
+            <p className="font-semibold mb-2">Email: <span className="font-normal">{order.email}</span></p>
+          </div>
+          
+          <div className="mb-4">
+            <p className="text-sm">Trạng thái: <span className="font-semibold text-green-600">{order.status}</span></p>
+            <p className="text-sm">Tổng tiền: <span className="font-semibold text-blue-600">{order.totalAmount ? order.totalAmount.toLocaleString() : 'N/A'} VNĐ</span></p>
+            <p className="text-sm">Địa chỉ giao hàng: <span className="font-semibold">{order.shippingAddress}</span></p>
+            <p className="text-sm">Phương thức thanh toán: <span className="font-semibold">{order.paymentMethod}</span></p>
+          </div>
+          
+          <h4 className="font-semibold text-md mt-4 text-[#00b7c0]">Thông tin sản phẩm:</h4>
+          <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+            {order.orderDetails.map((detail) => (
+              <li key={detail.productDetailId} className="border p-4 rounded-lg bg-gray-50 shadow-sm transition-transform transform hover:scale-105">
+                <div className="flex items-center">
+                  <img
+                    src={detail.productImage}
+                    alt={detail.productName}
+                    className="w-20 h-20 object-cover rounded-lg mr-4"
+                  />
+                  <div>
+                    <p className="font-semibold text-md">{detail.productName}</p>
+                    <p className="text-sm text-gray-600">Giá: {detail.productPrice.toLocaleString()} VNĐ</p>
+                    <p className="text-sm text-gray-600">Số lượng: {detail.quantity}</p>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      );
+      
+    });
   };
 
   return (
     <>
       <Header />
-      <div className="flex flex-col items-center mx-32">
-        <h2 className="font-bold text-2xl pt-4 text-[#00b7c0]">
-          Đơn hàng của bạn
-        </h2>
-        <main className="w-full bg-white shadow-md rounded-lg p-5">
-          <div className="flex border-b mb-4 justify-center p-3">
-            {[
-              "choXacNhan",
-              "vanChuyen",
-              "choGiaoHang",
-              "hoanThanh",
-              "daHuy",
-              "traHang",
-            ].map((tab) => (
-              <div
-                key={tab}
-                onClick={() => setSelectedTab(tab)}
-                className={`mr-4 pb-2 cursor-pointer ${
-                  selectedTab === tab
-                    ? "border-b-2 border-red-500 text-red-500"
-                    : "border-transparent hover:border-red-500"
-                }`}
-              >
-                {tab === "choXacNhan"
-                  ? "Chờ xác nhận"
-                  : tab === "vanChuyen"
-                  ? "Vận chuyển"
-                  : tab === "choGiaoHang"
-                  ? "Chờ giao hàng"
-                  : tab === "hoanThanh"
-                  ? "Hoàn thành"
-                  : tab === "daHuy"
-                  ? "Đã hủy"
-                  : "Trả hàng/Hoàn tiền"}
-              </div>
-            ))}
-          </div>
-
-          <div className="flex flex-col items-center justify-center h-64">
-            {renderContent()}
+      <div className="flex flex-col items-center mx-32 py-8 min-h-screen">
+        <h2 className="font-bold text-2xl pb-6 text-[#00b7c0]">Đơn hàng của bạn</h2>
+        <main className="w-full max-w-4xl bg-white shadow-md rounded-lg p-6">
+          <div className="grid gap-6">
+            {renderOrders()}
           </div>
         </main>
       </div>

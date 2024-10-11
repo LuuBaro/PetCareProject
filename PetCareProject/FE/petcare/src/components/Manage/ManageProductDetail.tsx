@@ -91,7 +91,7 @@ const ProductDetailManager = () => {
   const handleEdit = (detail) => {
     if (detail.products) { // Check if products exists
       setFormData({
-        productId: detail.products.productId || "", // Ensure productId is defined
+        productId: detail.product.productId || "", // Ensure productId is defined
         quantity: detail.quantity || 0, // Ensure quantity is defined
         price: detail.price || 0, // Ensure price is defined
       });
@@ -194,7 +194,7 @@ const ProductDetailManager = () => {
             </tr>
           ) : (
             productDetails.map((detail) => {
-              const product = products.find(p => p.productId === detail.products?.productId); 
+              const product = products.find(p => p.productId === detail.product?.productId); 
               return (
                 <tr key={detail.productDetailId}>
                   <td className="py-2 px-4 border-b">{product ? product.productName : "Unknown Product"}</td>

@@ -11,13 +11,13 @@ public class OrderDTO {
     private String orderDate;
     private double totalAmount;
     private String status; // Trạng thái đơn hàng
-    private List<OrderDetailDTO> orderDetails; // Chi tiết đơn hàng
+    private String paymentMethod;
+    private String shippingAddress;
+    private List<OrderDetailDTO> orderDetails; // Không cần OrderDTO.OrderDetailDTO
 
-    // Inner DTO for OrderDetail
-    @Data
-    public static class OrderDetailDTO {
-        private Long productDetailId; // ID của sản phẩm
-        private int quantity; // Số lượng sản phẩm
-        private double price; // Giá của sản phẩm
-    }
+    // Thêm các trường mới
+    private String fullName;
+    private String phoneNumber;
+    private String email;
 }
+
