@@ -16,6 +16,7 @@ import ProtectedRoute from "./service/ProtectedRoute";
 import Checkout from "./components/pay/Checkout";
 import AddressForm from "./components/pay/AddressForm";
 import User from "./components/user/User";
+import PayOrder from "./components/user/PayOrder";
 function App() {
   const userRole = localStorage.getItem("userRole");
   const currentPath = window.location.pathname;
@@ -41,6 +42,7 @@ function App() {
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/address" element={<AddressForm />} />
         <Route path="/user" element={<User />} />
+        <Route path="/payorder" element={<PayOrder />} />
 
      
         <Route

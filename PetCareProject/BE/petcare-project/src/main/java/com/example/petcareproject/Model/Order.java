@@ -14,9 +14,16 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long orderId;
     private Date orderDate;
+
+    @Column(name = "paymentMethod", columnDefinition = "NVARCHAR(255)")
     private String paymentMethod;
+
+    @Column(name = "paymentStatus", columnDefinition = "NVARCHAR(255)")
     private String paymentStatus;
+
+    @Column(name = "shippingAddress", columnDefinition = "NVARCHAR(255)")
     private String shippingAddress;
+
     private double shippingCost;
     private double totalAmount;
     private Boolean type;

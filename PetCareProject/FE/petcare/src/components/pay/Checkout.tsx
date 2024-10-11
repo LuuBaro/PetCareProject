@@ -98,6 +98,17 @@ const Checkout: React.FC = () => {
         productName: productDetail.productName,
       };
     })
+    console.log(JSON.stringify({
+      products: products.map((productDetail) => ({
+        productDetailId: productDetail.productId,
+        quantity: productDetail.quantity,
+        price: productDetail.price,
+        productName: productDetail.productName,
+      })),
+      total: total,
+      address: address,
+      userId: userId,
+    }));
     
     try {
       const response = await fetch("http://localhost:8080/api/checkout", {

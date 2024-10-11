@@ -2,6 +2,7 @@ package com.example.petcareproject.Controller;
 
 import com.example.petcareproject.Model.Order;
 import com.example.petcareproject.Model.OrderDetail;
+import com.example.petcareproject.Services.OrderDetailsService;
 import com.example.petcareproject.Services.OrderService;
 import com.example.petcareproject.dto.OrderDTO;
 import com.example.petcareproject.dto.OrderDetailDTO;
@@ -13,7 +14,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/api")
 public class OrderController {
-
+    @Autowired
+    private OrderDetailsService orderDetailsService;
 
     @Autowired
     private OrderService orderService;
@@ -41,6 +43,28 @@ public class OrderController {
 //        List<OrderDetail> orderDetails = orderService.getOrdersByUserId(userId);
 //        return ResponseEntity.ok(orderDetails);
 //    }
+//@GetMapping("/user/{userId}")
+//public ResponseEntity<List<OrderDetail>> getOrdersByUserId(@PathVariable Long userId) {
+//    List<OrderDetail> orders = orderDetailsService.findOrdersByUserId(userId);
+//    return ResponseEntity.ok(orders);
+//}
 
+//@GetMapping("/user/{userId}")
+//public List<OrderDTO> getOrdersByUserId(@PathVariable Long userId) {
+//    return orderService.getOrdersByUserId(userId);
+//}
+
+
+    @GetMapping("/{orderId}")
+    public ResponseEntity<OrderDTO> getOrderDetails(@PathVariable Long orderId) {
+        OrderDTO orderDTO = orderService.getOrderDetails(orderId);
+        return ResponseEntity.ok(orderDTO);
+    }
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<OrderDTO>> getUserOrders(@PathVariable Long userId) {
+        List<OrderDTO> orders = orderService.getUserOrders(userId);
+        return ResponseEntity.ok(orders);
+    }
 
 }

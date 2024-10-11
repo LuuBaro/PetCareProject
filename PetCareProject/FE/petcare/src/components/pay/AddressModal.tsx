@@ -150,7 +150,7 @@ const AddressModal: React.FC<AddressModalProps> = ({
               onClick={() => handleUpdateAddress(address.addressId)}
               className="text-blue-500"
             >
-              Cập nhật
+              Mặc định
             </button>
           </div>
           {address.isDefault && ( // Conditionally render the span
