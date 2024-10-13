@@ -26,7 +26,7 @@ function Admin() {
 
         <div className="flex flex-1 lg:flex-row sm:flex-col overflow-hidden">
           {/* SidebarMenu for navigation, responsive */}
-          <aside className="lg:w-1/4 sm:w-full bg-white shadow-md">
+          <aside className="lg:w-1/6 sm:w-full bg-white shadow-md">
             <SidebarMenu />
           </aside>
 

@@ -10,6 +10,7 @@ import DogProduct from "../components/product/DogProduct";
 import CatProduct from "../components/product/CatProduct";
 import Policy from "../components/policy/Policy";
 import Footer from "../components/footer/Footer";
+import KommunicateChat from "../components/chatbot/Chatbot";
 
 const HomePage = () => {
   return (
@@ -24,6 +25,7 @@ const HomePage = () => {
       <CatProduct></CatProduct>
       <Artical></Artical>
       <Policy></Policy>
+      <KommunicateChat></KommunicateChat>
       <Footer></Footer>
     </>
   );
