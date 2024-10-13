@@ -43,8 +43,11 @@ export function Login() {
 
         const userRole = localStorage.getItem("userRole");
         console.log("User Role:", userRole); // Kiểm tra giá trị
-
-        navigate('/'); // Navigate to the main page
+        if (userRole === 'Admin') {
+          navigate('/admin'); // Chuyển hướng ngay lập tức tới trang admin
+        } else {
+          navigate('/'); // Hoặc trang khác cho người dùng thông thường
+        }; // Navigate to the main page
       } else {
         const errorData = await response.json();
         Swal.fire({

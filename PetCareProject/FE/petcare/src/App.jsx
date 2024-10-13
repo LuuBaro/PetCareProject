@@ -17,6 +17,7 @@ import Checkout from "./components/pay/Checkout";
 import AddressForm from "./components/pay/AddressForm";
 import User from "./components/user/User";
 import PayOrder from "./components/user/PayOrder";
+import OrderPage from "./components/Manage/OrderPage";
 function App() {
   const userRole = localStorage.getItem("userRole");
   const currentPath = window.location.pathname;
@@ -43,6 +44,7 @@ function App() {
         <Route path="/address" element={<AddressForm />} />
         <Route path="/user" element={<User />} />
         <Route path="/payorder" element={<PayOrder />} />
+        <Route path="/orderpage" element={<OrderPage />} />
 
      
         <Route
