@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 
 interface OrderDetail {
   productDetailId: number;
@@ -16,7 +15,7 @@ interface Order {
   orderDate: string;
   totalAmount: number;
   status: string;
-  statusOrderId: number; 
+  statusOrderId: number;
   paymentMethod: string;
   shippingAddress: string;
   fullName: string;
@@ -34,7 +33,7 @@ const OrderManagement: React.FC = () => {
   const [cancelReason, setCancelReason] = useState<string>("");
   const [selectedCancelReason, setSelectedCancelReason] = useState<string>("");
   const [isSendingEmail, setIsSendingEmail] = useState<boolean>(false);
-
+  const [searchTerm, setSearchTerm] = useState<string>(""); // Trường tìm kiếm
   const cancelReasons = [
     "Thay đổi ý định",
     "Không còn nhu cầu",
@@ -71,10 +70,40 @@ const OrderManagement: React.FC = () => {
     setSelectedOrders(new Set());
   };
 
-  const filteredOrders =
-    activeTab === "all"
-      ? orders
-      : orders.filter((order) => order.status === activeTab);
+  // Lọc đơn hàng dựa trên tab hiện tại và từ khóa tìm kiếm
+ // Lọc đơn hàng dựa trên tab hiện tại và từ khóa tìm kiếm
+const filteredOrders = orders
+// Bước 1: Lọc theo tab hiện tại (nếu không phải "all")
+.filter((order) => activeTab === "all" || order.status?.toLowerCase() === activeTab.toLowerCase())
+// Bước 2: Lọc tiếp theo từ khóa tìm kiếm
+.filter((order) => {
+  const searchLower = searchTerm.toLowerCase();
+
+  // Kiểm tra tất cả các thông tin trong đơn hàng
+  const orderInfo = [
+    order.fullName?.toLowerCase() || '', // Thêm kiểm tra null/undefined
+    order.email?.toLowerCase() || '',
+    order.status?.toLowerCase() || '',
+    order.phoneNumber?.toLowerCase() || '',
+    order.shippingAddress?.toLowerCase() || '',
+    order.paymentMethod?.toLowerCase() || '',
+    order.totalAmount?.toString().toLowerCase() || '',
+    order.orderDate?.toLowerCase() || '',
+  ];
+
+  // Kiểm tra trong thông tin chi tiết sản phẩm
+  const productInfo = order.orderDetails.some((detail) =>
+    [
+      detail.productName?.toLowerCase() || '', // Thêm kiểm tra null/undefined
+      detail.price?.toString().toLowerCase() || '',
+      detail.quantity?.toString().toLowerCase() || '',
+    ].some((field) => field.includes(searchLower))
+  );
+
+  // Nếu từ khóa tìm thấy trong bất kỳ trường nào
+  return orderInfo.some((field) => field.includes(searchLower)) || productInfo;
+});
+
 
   const handleCheckboxChange = (orderId: number) => {
     const updatedSelection = new Set(selectedOrders);
@@ -139,7 +168,7 @@ const OrderManagement: React.FC = () => {
 
   const confirmCancel = async () => {
     const selectedOrderIds = Array.from(selectedOrders);
-    setIsSendingEmail(true); 
+    setIsSendingEmail(true);
 
     try {
       for (const orderId of selectedOrderIds) {
@@ -148,8 +177,11 @@ const OrderManagement: React.FC = () => {
           null,
           {
             params: {
-              reason: selectedCancelReason === "Khác" ? cancelReason : selectedCancelReason,
-            }
+              reason:
+                selectedCancelReason === "Khác"
+                  ? cancelReason
+                  : selectedCancelReason,
+            },
           }
         );
 
@@ -157,14 +189,14 @@ const OrderManagement: React.FC = () => {
           handleOrderAction("Đã hủy");
         }
       }
-      
+
       setShowCancelModal(false);
       setCancelReason("");
       setSelectedCancelReason("");
     } catch (error) {
       console.error("Error canceling order:", error);
     } finally {
-      setIsSendingEmail(false); 
+      setIsSendingEmail(false);
     }
   };
 
@@ -174,25 +206,33 @@ const OrderManagement: React.FC = () => {
 
   return (
     <div className="container mx-auto mt-4 p-4 bg-white shadow-lg rounded-lg">
-      <div className="flex justify-around border-b-2 pb-2 mb-4">
-        {tabs.map((tab) => (
-         <button
-         key={tab.id}
-         className={`text-lg p-2 transition-all rounded-md relative ${
-           activeTab === tab.id
-             ? "text-[#00b7c0]" // Chỉ thay đổi màu chữ khi active
-             : "text-gray-500"
-         }`}
-         onClick={() => handleTabChange(tab.id)}
-       >
-         {tab.label}
-         {activeTab === tab.id && (
-           <span className="absolute left-0 right-0 bottom-0 h-[2px] bg-[#00b7c0]" /> // Đường gạch dưới
-         )}
-       </button>
-       
+      <div className="border-b-2 pb-2 mb-4">
+      <div className="flex justify-between mb-4">
+        <input
+          type="text"
+          placeholder="Tìm kiếm đơn hàng..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="border p-2 w-full"
+        />
+      </div>
+      <div className="flex justify-around">{tabs.map((tab) => (
+          <button
+            key={tab.id}
+            className={`text-lg p-2 transition-all rounded-md relative ${
+              activeTab === tab.id
+                ? "text-[#00b7c0]" // Chỉ thay đổi màu chữ khi active
+                : "text-gray-500"
+            }`}
+            onClick={() => handleTabChange(tab.id)}
+          >
+            {tab.label}
+            {activeTab === tab.id && (
+              <span className="absolute left-0 right-0 bottom-0 h-[2px] bg-[#00b7c0]" /> // Đường gạch dưới
+            )}
+          </button>
+        ))}</div>
         
-        ))}
       </div>
 
       <div className="mb-6 flex justify-end">
@@ -245,7 +285,7 @@ const OrderManagement: React.FC = () => {
               <tr>
                 <th className="border p-2">Sản phẩm</th>
                 <th className="border p-2">Doanh thu đơn hàng</th>
-                <th className="border p-2">Đơn vị vận chuyển</th>
+                <th className="border p-2">Phương thức thanh toán</th>
                 <th className="border p-2">Thời gian tạo đơn</th>
                 <th className="border p-2">Thông tin khách hàng</th>
                 <th className="border p-2">Trạng thái</th>
@@ -257,19 +297,28 @@ const OrderManagement: React.FC = () => {
                 <tr key={order.orderId} className="text-sm hover:bg-gray-50">
                   <td className="border p-2">
                     {order.orderDetails.map((detail) => (
-                      <div key={detail.productId} className="flex items-center mb-2">
+                      <div
+                        key={detail.productId}
+                        className="flex items-center mb-2"
+                      >
                         <img
                           src={detail.productImage}
                           alt={detail.productName}
                           className="w-16 h-16 object-cover rounded mr-2"
                         />
-                        <span>{detail.productName} (x{detail.quantity})</span>
+                        <span>
+                          {detail.productName} (x{detail.quantity})
+                        </span>
                       </div>
                     ))}
                   </td>
-                  <td className="border p-2">{order.totalAmount.toLocaleString()} VNĐ</td>
+                  <td className="border p-2">
+                    {order.totalAmount.toLocaleString()} VNĐ
+                  </td>
                   <td className="border p-2">{order.paymentMethod}</td>
-                  <td className="border p-2">{new Date(order.orderDate).toLocaleString()}</td>
+                  <td className="border p-2">
+                    {new Date(order.orderDate).toLocaleString()}
+                  </td>
                   <td className="border p-2">
                     {order.fullName} - {order.phoneNumber} - {order.email}
                   </td>
@@ -327,7 +376,9 @@ const OrderManagement: React.FC = () => {
               </button>
               <button
                 onClick={confirmCancel}
-                className={`bg-red-600 text-white p-2 rounded-md ${isSendingEmail ? "opacity-50" : ""}`}
+                className={`bg-red-600 text-white p-2 rounded-md ${
+                  isSendingEmail ? "opacity-50" : ""
+                }`}
                 disabled={isSendingEmail}
               >
                 {isSendingEmail ? "Đang xử lý..." : "Xác nhận hủy"}

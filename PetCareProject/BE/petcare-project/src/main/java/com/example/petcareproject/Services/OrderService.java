@@ -131,7 +131,7 @@ public class OrderService {
 
         // Lấy statusOrderId từ StatusOrder
         orderDTO.setStatusOrderId(orderDTO.getStatusOrderId());
-
+        orderDTO.setStatusOrderId(order.getStatusOrder().getStatusOrderId());
 
         orderDTO.setPaymentMethod(order.getPaymentMethod());
         orderDTO.setShippingAddress(order.getShippingAddress());
