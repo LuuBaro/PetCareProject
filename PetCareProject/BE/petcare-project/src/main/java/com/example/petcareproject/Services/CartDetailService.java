@@ -90,4 +90,21 @@ public class CartDetailService {
         cartDetailRepository.delete(cartDetail);
     }
 
+    public void clearCartAfterCheckout(Long userId) {
+        // Retrieve the user by userId
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Find all cart items for the user
+        List<CartDetail> cartItems = cartDetailRepository.findByUser(user);
+
+        if (cartItems.isEmpty()) {
+            throw new RuntimeException("No items in the cart to clear.");
+        }
+
+        // Delete all the cart items for this user
+        cartDetailRepository.deleteAll(cartItems);
+    }
+
+
 }
