@@ -173,6 +173,13 @@ const ProductDetail = () => {
               <strong>Tồn kho:</strong> {stockAvailable || 0} sản phẩm
             </p>
 
+            {/* Show out-of-stock message if product is unavailable */}
+            {stockAvailable === 0 && (
+              <p className="text-lg text-red-600 mt-2">
+                Sản phẩm này hiện đã hết hàng.
+              </p>
+            )}
+
             <div className="mt-6">
               <label
                 htmlFor="quantity"
@@ -236,9 +243,7 @@ const ProductDetail = () => {
                   <h3 className="text-xl font-semibold text-gray-900">
                     {product.productName}
                   </h3>
-                  <p className="text-lg text-red-600 mt-2">
-                    {product.price}₫
-                  </p>
+                  <p className="text-lg text-red-600 mt-2">{product.price}₫</p>
                 </div>
               </div>
             ))}
