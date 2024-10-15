@@ -3,8 +3,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import Header from "../header/Header";
 import Modal from "react-modal";
 import AddressForm from "../pay/AddressForm";
-import AddressModal from "../pay/AddressModal";
 import Swal from "sweetalert2";
+
 interface Product {
   productId: number;
   image: string;
@@ -20,50 +20,52 @@ const Checkout: React.FC = () => {
   const total: number = location.state?.total || 0;
   const [refreshCheckout, setRefreshCheckout] = useState(0);
 
-  const userId = localStorage.getItem("userId"); // Move userId inside the component
-  const token = localStorage.getItem("token"); // Move userId inside the component
+  const userId = localStorage.getItem("userId");
+  const token = localStorage.getItem("token");
+
   if (!userId) {
     throw new Error("User ID is missing from local storage");
   }
+
   const [address, setAddress] = useState<any | null>(null);
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     const fetchFirstAddress = async () => {
-      setLoading(true); // Start loading
+      setLoading(true);
       try {
         const response = await fetch(
           `http://localhost:8080/api/addresses/first?userId=${userId}`
         );
 
         if (!response.ok) {
-          // Log the response text if it's not okay
           const errorText = await response.text();
           console.error(
             `Error fetching address. Status: ${response.status}, Message: ${errorText}`
           );
-          throw new Error("Address not found");
+          throw new Error("Địa chỉ không tìm thấy");
         }
 
         const contentType = response.headers.get("content-type");
 
-        // Check if response is JSON
         if (contentType && contentType.indexOf("application/json") !== -1) {
           const data = await response.json();
           setAddress(data.fullAddress);
         } else {
           console.error("Expected JSON, but received:", await response.text());
-          throw new Error("Invalid response format");
+          throw new Error("Định dạng phản hồi không hợp lệ");
         }
       } catch (error) {
         console.error("Error fetching first address:", error);
+        alert("Không thể kết nối đến server.");
       } finally {
-        setLoading(false); // End loading
+        setLoading(false);
       }
     };
 
     fetchFirstAddress();
-  }, [userId, refreshCheckout]); // Add userId and refreshCheckout to the dependency array
+  }, [userId, refreshCheckout]);
 
   const formatPrice = (price: number): string => {
     return new Intl.NumberFormat("vi-VN", {
@@ -72,79 +74,65 @@ const Checkout: React.FC = () => {
     }).format(price);
   };
 
+  const clearCartAfterCheckout = () => {
+    localStorage.removeItem("cartItems");
+    console.log("Giỏ hàng đã được xóa sau khi thanh toán thành công.");
+  };
+
   const handlePayment = async () => {
     if (!address) {
       alert("Vui lòng cung cấp địa chỉ giao hàng.");
       return;
     }
-
+  
     if (products.length === 0) {
       alert("Giỏ hàng trống, không thể thanh toán.");
       return;
     }
-
-    // Log thông tin sản phẩm và địa chỉ
+  
     console.log("Thông tin sản phẩm:", products);
     console.log("Tổng tiền:", total);
     console.log("Địa chỉ giao hàng:", address);
     console.log("User ID:", userId);
-
-    products.map((productDetail) => {
-      console.log("Sản phẩm:", productDetail);
-      return {
-        productDetailId: productDetail.productId, // Sử dụng productDetailId
-        quantity: productDetail.quantity,
-        price: productDetail.price,
-        productName: productDetail.productName,
-      };
-    })
-    console.log(JSON.stringify({
-      products: products.map((productDetail) => ({
-        productDetailId: productDetail.productId,
-        quantity: productDetail.quantity,
-        price: productDetail.price,
-        productName: productDetail.productName,
-      })),
-      total: total,
-      address: address,
-      userId: userId,
-    }));
-    
+  
     try {
       const response = await fetch("http://localhost:8080/api/checkout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
         },
         body: JSON.stringify({
           products: products.map((productDetail) => ({
-            productDetailId: productDetail.productId, // Sử dụng productDetailId để nhận diện sản phẩm
+            productDetailId: productDetail.productId,
             quantity: productDetail.quantity,
             price: productDetail.price,
-            productName: productDetail.productName, // Nếu API cần tên sản phẩm, bạn có thể giữ lại
+            productName: productDetail.productName,
           })),
           total: total,
           address: address,
-          userId: userId, // Gửi userId từ frontend
+          userId: userId,
         }),
       });
-
-      if (response.ok) {
-        // Hiển thị thông báo thành công
-        Swal.fire({
-          title: "Thanh toán thành công!",
-          text: "Cảm ơn bạn đã đặt hàng. Đơn hàng của bạn sẽ được xử lý ngay.",
-          icon: "success",
-          confirmButtonText: "OK",
-        }).then(() => {
-          navigate("/user");
-        });
-      } else {
+  
+      if (!response.ok) {
         const errorText = await response.text();
-        alert(`Đã xảy ra lỗi khi xử lý thanh toán: ${errorText}`);
+        throw new Error(`Thanh toán thất bại: ${errorText}`);
       }
+  
+      Swal.fire({
+        title: "Thanh toán thành công!",
+        text: "Cảm ơn bạn đã đặt hàng. Đơn hàng của bạn sẽ được xử lý ngay.",
+        icon: "success",
+        confirmButtonText: "OK",
+      }).then(() => {
+        // Clear cart only after successful payment
+        clearCartAfterCheckout();
+        navigate("/user");
+      });
     } catch (error) {
-      alert("Không thể kết nối đến server.");
+      console.error("Lỗi khi thanh toán:", error);
+      alert(`Thanh toán thất bại: ${error.message}`);
     }
   };
 
@@ -156,35 +144,10 @@ const Checkout: React.FC = () => {
     setModalIsOpen(false);
   };
 
-  useEffect(() => {
-    if (!modalIsOpen && address) {
-      // Tự động reload dữ liệu khi địa chỉ đã được chọn hoặc lưu thành công
-      const fetchFirstAddress = async () => {
-        try {
-          const response = await fetch(
-            `http://localhost:8080/api/addresses/first?userId=${userId}`
-          );
-          if (!response.ok) {
-            throw new Error("Address not found");
-          }
-          const data = await response.json();
-          setAddress(data.fullAddress);
-        } catch (error) {
-          console.error("Error fetching first address:", error);
-        }
-      };
-
-      fetchFirstAddress();
-    }
-  }, [modalIsOpen, address, userId]); // Thêm address và modalIsOpen vào dependency để theo dõi thay đổi
-
   const saveAddress = async (newAddress: any) => {
     const { fullAddress, ward, district, province, street } = newAddress;
-
-    // Format the address for full_address
     const formattedFullAddress = `${street}, ${ward}, ${district}, ${province}`;
 
-    // Call the API to save the new address
     try {
       const response = await fetch("http://localhost:8080/api/addresses", {
         method: "POST",
@@ -192,7 +155,7 @@ const Checkout: React.FC = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          userId: userId, // Assuming you have userId available
+          userId: userId,
           fullAddress: formattedFullAddress,
           street: street,
           ward: ward,
@@ -208,11 +171,10 @@ const Checkout: React.FC = () => {
         return;
       }
 
-      // If successful, set the address in the state
       setAddress(formattedFullAddress);
       closeModal();
     } catch (error) {
-      console.error("Error saving address:", error);
+      console.error("Lỗi khi lưu địa chỉ:", error);
       alert("Không thể kết nối đến server.");
     }
   };
@@ -233,9 +195,8 @@ const Checkout: React.FC = () => {
               <span className="font-bold">Địa Chỉ Nhận Hàng</span>
             </div>
             <div className="ml-6">
-              {/*<p className="font-bold mb-2"></p>*/}
               <p className="font-bold mb-2">
-                {loading ? "Loading..." : address || "Chưa có địa chỉ nào."}
+                {loading ? "Đang tải..." : address || "Chưa có địa chỉ nào."}
               </p>
               <button onClick={openModal} className="text-blue-500">
                 Thay Đổi
@@ -266,131 +227,40 @@ const Checkout: React.FC = () => {
                       <span>{product.productName}</span>
                     </td>
                     <td className="p-2">{formatPrice(product.price)}</td>
-                    <td className="p-8 text-left">{product.quantity}</td>
-                    <td className="p-2 text-right font-bold">
+                    <td className="p-2">{product.quantity}</td>
+                    <td className="p-2 text-right">
                       {formatPrice(product.price * product.quantity)}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
-
-          {/* Voucher và phương thức thanh toán */}
-          <div className="border-b pb-4 mb-4">
-            <div className="flex justify-between items-center mb-4">
-              <div className="flex items-center">
-                <i className="fas fa-ticket-alt text-red-500 mr-2"></i>
-                <span className="text-lg">PetCare Voucher</span>
-              </div>
-              <a href="#" className="text-blue-500">
-                Chọn Voucher
-              </a>
-            </div>
-            <div className="flex justify-between items-center">
-              <div className="flex items-center">
-                <i className="fas fa-coins text-yellow-500 mr-2"></i>
-                <span className="text-lg">PetCare Xu</span>
-              </div>
-              <span className="text-gray-500">Không thể sử dụng Xu</span>
+            <div className="flex justify-between">
+              <span className="font-bold text-xl">Tổng cộng:</span>
+              <span className="font-bold text-xl text-[#00b7c0]">
+                {formatPrice(total)}
+              </span>
             </div>
           </div>
 
-          {/* Phương thức thanh toán */}
-          <div className="border-b pb-4 mb-4">
-            <div className="text-lg font-semibold mb-2">
-              Phương thức thanh toán
-            </div>
-            <div className="flex justify-between items-center">
-              <span>Thanh toán khi nhận hàng</span>
-              <a href="#" className="text-blue-500">
-                THAY ĐỔI
-              </a>
-            </div>
-          </div>
-
-          {/* Tổng số tiền */}
-          <div className="bg-gray-50 p-4 mb-4">
-            <div className="flex justify-between items-center mb-4">
-              <span>Tổng tiền hàng</span>
-              <span>{formatPrice(total)}</span>
-            </div>
-            <div className="flex justify-between items-center mb-2">
-              <span>Phí vận chuyển</span>
-              <span>15.000 ₫</span> {/* Static for now */}
-            </div>
-          </div>
-          {/* Tổng cộng */}
-          <div className="mt-6 text-right">
-            <h2 className="text-xl font-bold text-red-500">
-              Tổng cộng: {formatPrice(total + 15000)}
-            </h2>
+          <div className="flex justify-center mt-6">
             <button
               onClick={handlePayment}
-              className="bg-[#00b7c0] text-white px-6 py-2 rounded-lg hover:bg-[#41797c] transition duration-300 mt-4"
+              className="bg-[#00b7c0] text-white px-6 py-3 rounded-full font-bold"
             >
-              Đặt hàng
+              Thanh toán
             </button>
-          </div>
-          <div className="text-center text-gray-500 text-sm mt-4">
-            Nhấn "Đặt hàng" đồng nghĩa với việc bạn đồng ý tuân theo{" "}
-            <a href="#" className="text-blue-500">
-              Điều khoản PetCare
-            </a>
           </div>
         </div>
       </div>
 
-      {/* Modal để chọn địa chỉ */}
-      <Modal
-        isOpen={modalIsOpen}
-        onRequestClose={closeModal}
-        contentLabel="Chọn Địa Chỉ"
-        ariaHideApp={false}
-        style={{
-          content: {
-            width: "60%", // Tăng kích thước modal
-            maxWidth: "800px", // Đảm bảo modal không quá lớn
-            height: "70%", // Tăng chiều cao của modal
-            margin: "auto", // Canh giữa modal
-            borderRadius: "10px", // Bo góc nhẹ
-            padding: "20px", // Thêm khoảng cách bên trong modal
-            boxShadow: "0 4px 10px rgba(0, 0, 0, 0.2)", // Thêm shadow để modal nổi bật hơn
-          },
-        }}
-      >
-        <div className="modal-header">
-          <h2 className="text-xl font-bold text-center">
-            Chọn Địa Chỉ Giao Hàng
-          </h2>
-        </div>
-        <div className="modal-body">
-          <AddressModal
-            isOpen={modalIsOpen}
-            onClose={closeModal}
-            userId={userId}
-            onAddressSelected={(addressId) => {
-              // Fetch the full address from the API based on the addressId
-              fetch(`http://localhost:8080/api/addresses/${addressId}`, {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
-              })
-                .then((res) => {
-                  if (!res.ok) {
-                    throw new Error("Network response was not ok");
-                  }
-                  return res.json();
-                })
-                .then((data) => setAddress(data)) // Store the whole address object
-                .catch((error) =>
-                  console.error("Error fetching address:", error)
-                );
-              setRefreshCheckout((prev) => prev + 1);
-            }}
-            currentCheckoutAddressId={address?.addressId ?? null}
-          />
-        </div>
+      {/* Modal for Address Form */}
+      <Modal isOpen={modalIsOpen} onRequestClose={closeModal} contentLabel="Address Modal">
+        <h2 className="text-2xl font-bold mb-4">Chỉnh sửa địa chỉ</h2>
+        <AddressForm saveAddress={saveAddress} />
+        <button onClick={closeModal} className="mt-4 bg-red-500 text-white px-4 py-2 rounded">
+          Đóng
+        </button>
       </Modal>
     </div>
   );

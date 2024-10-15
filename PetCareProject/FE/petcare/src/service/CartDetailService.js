@@ -71,8 +71,62 @@ const handleQuantityChange = (e, stockAvailable, setQuantity) => {
     setQuantity(Math.min(value, stockAvailable)); 
 };
 
+// Hàm xóa sản phẩm khỏi giỏ hàng sau khi thanh toán thành công
+const clearCartAfterCheckout = async (userId, token) => {
+    try {
+        // Gửi yêu cầu xóa toàn bộ sản phẩm trong giỏ hàng
+        const response = await axios.delete(`${API_URL}/clear/${userId}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        // Xử lý phản hồi từ server
+        if (response.status === 200) {
+            toastr.success("Giỏ hàng của bạn đã được xóa sau khi thanh toán thành công.");
+            return true;
+        } else {
+            toastr.error("Có lỗi xảy ra khi xóa giỏ hàng.");
+            return false;
+        }
+    } catch (error) {
+        console.error("Error while clearing the cart:", error);
+        toastr.error("Lỗi khi xóa giỏ hàng. Vui lòng thử lại.");
+        throw error;
+    }
+};
+
+// Hàm cập nhật số lượng sản phẩm sau khi thanh toán
+const updateQuantityCheckout = async (userId, token) => {
+    try {
+        // Gửi yêu cầu cập nhật số lượng sản phẩm trong giỏ hàng sau khi thanh toán
+        const response = await axios.post(`${API_URL}/update-quantity/${userId}`, {}, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        // Xử lý phản hồi từ server
+        if (response.status === 200) {
+            toastr.success("Số lượng sản phẩm đã được cập nhật sau khi thanh toán.");
+            return true;
+        } else {
+            toastr.error("Có lỗi xảy ra khi cập nhật số lượng sản phẩm.");
+            return false;
+        }
+    } catch (error) {
+        console.error("Error while updating quantity after checkout:", error);
+        toastr.error("Lỗi khi cập nhật số lượng sản phẩm. Vui lòng thử lại.");
+        throw error;
+    }
+};
+
 export default {
     addToCart,
     checkoutCart,
-    handleQuantityChange
+    handleQuantityChange,
+    clearCartAfterCheckout,
+    updateQuantityCheckout // Thêm hàm updateQuantityCheckout vào export
 };

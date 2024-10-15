@@ -15,5 +15,5 @@ public class Voucher {
     private Date startDate;
     private Date endDate;
     private int quantity;
-    private double percent;
+    private double percents;
 }
