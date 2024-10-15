@@ -43,6 +43,12 @@ class ProductService {
   deleteProduct(id) {
     return axios.delete(`${API_URL}/${id}`);
   }
+
+
+
+  getTopSellingProducts() {
+    return axios.get(`${API_URL}/top-selling`); // API để lấy sản phẩm bán chạy nhất
+}
 }
 
 export default new ProductService();
