@@ -82,22 +82,24 @@ const Checkout: React.FC = () => {
       alert("Vui lòng cung cấp địa chỉ giao hàng.");
       return;
     }
-
+  
     if (products.length === 0) {
       alert("Giỏ hàng trống, không thể thanh toán.");
       return;
     }
-
+  
     console.log("Thông tin sản phẩm:", products);
     console.log("Tổng tiền:", total);
     console.log("Địa chỉ giao hàng:", address);
     console.log("User ID:", userId);
-
+  
     try {
+      // Thực hiện thanh toán
       const response = await fetch("http://localhost:8080/api/checkout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}` // Add Authorization header if required
         },
         body: JSON.stringify({
           products: products.map((productDetail) => ({
@@ -111,16 +113,47 @@ const Checkout: React.FC = () => {
           userId: userId,
         }),
       });
-
+  
       if (response.ok) {
+        // Thông báo thanh toán thành công
         Swal.fire({
           title: "Thanh toán thành công!",
           text: "Cảm ơn bạn đã đặt hàng. Đơn hàng của bạn sẽ được xử lý ngay.",
           icon: "success",
           confirmButtonText: "OK",
-        }).then(() => {
-          clearCartAfterCheckout(); // Clear the cart after successful payment
-          navigate("/user");
+        }).then(async () => {
+          // Cập nhật số lượng sản phẩm sau khi thanh toán thành công
+          try {
+            const updateResponse = await fetch(
+              `http://localhost:8080/api/cart/update-quantity/${userId}`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${token}`, // Add Authorization header if required
+                },
+                body: JSON.stringify({
+                  products: products.map((product) => ({
+                    productId: product.productId,
+                    quantity: product.quantity,
+                  })),
+                }),
+              }
+            );
+  
+            if (updateResponse.ok) {
+              const errorText = await updateResponse.text();
+              console.error("Error updating product quantities:", errorText);
+              alert("Không thể cập nhật số lượng sản phẩm.");
+            } else {
+              console.log("Số lượng sản phẩm đã được cập nhật thành công.");
+              clearCartAfterCheckout(); // Clear the cart after successful payment
+              navigate("/user"); // Redirect to the user's page after checkout
+            }
+          } catch (error) {
+            console.error("Error updating product quantities:", error);
+            alert("Không thể kết nối để cập nhật số lượng sản phẩm.");
+          }
         });
       } else {
         const errorText = await response.text();
@@ -130,6 +163,7 @@ const Checkout: React.FC = () => {
       alert("Không thể kết nối đến server.");
     }
   };
+  
 
   const openModal = () => {
     setModalIsOpen(true);

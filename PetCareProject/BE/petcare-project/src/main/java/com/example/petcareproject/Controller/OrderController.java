@@ -39,8 +39,15 @@ public class OrderController {
     @PostMapping("/checkout")
     public ResponseEntity<String> checkout(@RequestBody CheckoutRequest request) {
         try {
+            // Step 1: Process the order (create the order and order details)
             orderService.processOrder(request);
+
+            // Step 2: Update product quantities based on the order details
+            cartDetailService.updateQuantityCheckout(request.userId);
+
+            // Step 3: Clear the cart after checkout
             cartDetailService.clearCartAfterCheckout(request.userId);
+
             return ResponseEntity.ok("Đặt hàng thành công");
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Đã xảy ra lỗi khi đặt hàng: " + e.getMessage());

@@ -21,4 +21,5 @@ public interface OrderDetailRepository extends JpaRepository<OrderDetail, Long> 
     // Tìm tất cả các chi tiết đơn hàng theo đơn hàng
     List<OrderDetail> findByOrder(Order order);
 
+
 }

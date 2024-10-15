@@ -38,4 +38,8 @@ public class ProductDetailService {
     public ProductDetail getProductDetailByProductId(Long productId) {
         return productDetailRepository.findByProductId(productId);
     }
+
+    public void updateQuantity(Long productId, int newQuantity) {
+        productDetailRepository.updateProductDetailQuantity(productId, newQuantity);
+    }
 }
