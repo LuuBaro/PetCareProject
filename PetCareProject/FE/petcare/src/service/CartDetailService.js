@@ -71,8 +71,35 @@ const handleQuantityChange = (e, stockAvailable, setQuantity) => {
     setQuantity(Math.min(value, stockAvailable)); 
 };
 
+// Hàm xóa sản phẩm khỏi giỏ hàng sau khi thanh toán thành công
+const clearCartAfterCheckout = async (userId, token) => {
+    try {
+        // Gửi yêu cầu xóa toàn bộ sản phẩm trong giỏ hàng
+        const response = await axios.delete(`${API_URL}/clear/${userId}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        // Xử lý phản hồi từ server
+        if (response.status === 200) {
+            toastr.success("Giỏ hàng của bạn đã được xóa sau khi thanh toán thành công.");
+            return true;
+        } else {
+            toastr.error("Có lỗi xảy ra khi xóa giỏ hàng.");
+            return false;
+        }
+    } catch (error) {
+        console.error("Error while clearing the cart:", error);
+        toastr.error("Lỗi khi xóa giỏ hàng. Vui lòng thử lại.");
+        throw error;
+    }
+};
+
 export default {
     addToCart,
     checkoutCart,
-    handleQuantityChange
+    handleQuantityChange,
+    clearCartAfterCheckout // Thêm hàm clearCartAfterCheckout vào export
 };

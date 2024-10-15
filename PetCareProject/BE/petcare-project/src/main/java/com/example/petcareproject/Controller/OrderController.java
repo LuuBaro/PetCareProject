@@ -4,6 +4,7 @@ import com.example.petcareproject.Model.Order;
 import com.example.petcareproject.Model.OrderDetail;
 import com.example.petcareproject.Model.StatusOrder;
 import com.example.petcareproject.Repository.OrderRepository;
+import com.example.petcareproject.Services.CartDetailService;
 import com.example.petcareproject.Services.EmailService;
 import com.example.petcareproject.Services.OrderDetailsService;
 import com.example.petcareproject.Services.OrderService;
@@ -32,10 +33,14 @@ public class OrderController {
     @Autowired
     private OrderRepository orderRepository;
 
+    @Autowired
+    private CartDetailService cartDetailService;
+
     @PostMapping("/checkout")
     public ResponseEntity<String> checkout(@RequestBody CheckoutRequest request) {
         try {
             orderService.processOrder(request);
+            cartDetailService.clearCartAfterCheckout(request.userId);
             return ResponseEntity.ok("Đặt hàng thành công");
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Đã xảy ra lỗi khi đặt hàng: " + e.getMessage());
