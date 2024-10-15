@@ -98,6 +98,7 @@ public class CartDetailService {
         // Find all cart items for the user
         List<CartDetail> cartItems = cartDetailRepository.findByUser(user);
 
+
         if (cartItems.isEmpty()) {
             throw new RuntimeException("No items in the cart to clear.");
         }
@@ -105,6 +106,35 @@ public class CartDetailService {
         // Delete all the cart items for this user
         cartDetailRepository.deleteAll(cartItems);
     }
+
+    public void updateQuantityCheckout(Long userId) {
+        // Retrieve the user by userId
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Find all cart items for the user
+        List<CartDetail> cartItems = cartDetailRepository.findByUser(user);
+
+        if (cartItems.isEmpty()) {
+            throw new RuntimeException("No items in the cart to update.");
+        }
+
+        // Loop through each cart item and update the product quantity in ProductDetail
+        for (CartDetail cartDetail : cartItems) {
+            ProductDetail productDetail = cartDetail.getProductDetail();
+            int newQuantity = productDetail.getQuantity() - cartDetail.getQuantityItem();
+
+            // Check if there's enough stock
+            if (newQuantity < 0) {
+                throw new RuntimeException("Not enough stock for product: " + productDetail.getProduct().getProductName());
+            }
+
+            // Update the product quantity in ProductDetail
+            productDetail.setQuantity(newQuantity);
+            productDetailRepository.save(productDetail);
+        }
+    }
+
 
 
 }

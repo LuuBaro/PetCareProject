@@ -72,5 +72,15 @@ public class CartDetailController {
         }
     }
 
+    @PostMapping("/update-quantity/{userId}")
+    public ResponseEntity<String> updateQuantityAfterCheckout(@PathVariable Long userId) {
+        try {
+            cartDetailService.updateQuantityCheckout(userId);
+            return ResponseEntity.ok("Số lượng sản phẩm đã được cập nhật.");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Lỗi khi cập nhật số lượng sản phẩm: " + e.getMessage());
+        }
+    }
+
 
 }

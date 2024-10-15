@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import ProductDetailService from "../../service/ProductDetailService";
-import CartService from "../../service/CartDetailService"; // Import CartService
+import ProductService from "../../service/ProductService";
+import CartService from "../../service/CartDetailService";
 import Header from "../header/Header";
 import toastr from "toastr";
 import "toastr/build/toastr.min.css";
+import $ from "jquery";
 
 toastr.options.timeOut = 2000;
 
@@ -15,6 +17,8 @@ const ProductDetail = () => {
   const [error, setError] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [stockAvailable, setStockAvailable] = useState(0);
+  const [cartItems, setCartItems] = useState([]);
+  const [allProducts, setAllProducts] = useState([]);
 
   useEffect(() => {
     const fetchProductDetail = async () => {
@@ -26,9 +30,9 @@ const ProductDetail = () => {
         }
         setProductDetail(response);
         setStockAvailable(response.quantity);
+        setQuantity(1);
       } catch (error) {
-        const errorMessage =
-          error.message || "Lỗi khi lấy thông tin sản phẩm. Vui lòng thử lại sau.";
+        const errorMessage = error.message || "Lỗi khi lấy thông tin sản phẩm.";
         setError(errorMessage);
         toastr.error(errorMessage);
       } finally {
@@ -39,50 +43,74 @@ const ProductDetail = () => {
     fetchProductDetail();
   }, [productId]);
 
-  if (loading) {
-    return <div className="text-center py-10 text-lg">Đang tải...</div>;
-  }
+  useEffect(() => {
+    const loadCart = async () => {
+      try {
+        const response = await CartService.getCartItems();
+        setCartItems(response.data || []);
+      } catch (error) {
+        console.error("Error loading cart:", error);
+      }
+    };
 
-  if (error) {
-    return (
-      <div className="text-center py-10 text-lg text-red-600">{error}</div>
-    );
-  }
+    loadCart();
+  }, []);
 
-  if (!productDetail) {
-    return (
-      <div className="text-center py-10 text-lg text-red-600">
-        Không tìm thấy sản phẩm.
-      </div>
-    );
-  }
+  useEffect(() => {
+    const fetchAllProducts = async () => {
+      try {
+        const response = await ProductService.getAllProducts();
+        setAllProducts(response.data || []);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      }
+    };
 
-  const { product, price } = productDetail;
+    fetchAllProducts();
+  }, []);
+
+  const getProductQuantityInCart = () => {
+    const cartItem = cartItems.find((item) => item.productDetailId === productDetail.productDetailId);
+    return cartItem ? cartItem.quantity : 0;
+  };
 
   const handleQuantityChange = (e) => {
-    const value = Math.max(1, parseInt(e.target.value));
-
-    // Kiểm tra số lượng và hiển thị thông báo nếu vượt quá số lượng có sẵn
-    if (value > stockAvailable) {
-        toastr.error(`Bạn chỉ có thể thêm tối đa ${stockAvailable} sản phẩm.`);
+    let value = parseInt(e.target.value);
+    if (value < 0) {
+      value = 0;
     }
+    if (value > stockAvailable) {
+      toastr.error(`Bạn chỉ có thể thêm tối đa ${stockAvailable} sản phẩm.`);
+      $("body").append(
+        `<div class="toast toast-error">Bạn chỉ có thể thêm tối đa ${stockAvailable} sản phẩm.</div>`
+      );
+      $(".toast").fadeIn().delay(3000).fadeOut(function () {
+        $(this).remove();
+      });
+    }
+    setQuantity(Math.min(value, stockAvailable));
 
-    // Cập nhật số lượng, đảm bảo không vượt quá số hàng có sẵn
-    setQuantity(Math.min(value, stockAvailable)); 
-};
-
+    if (value === 0) {
+      toastr.error("Sản phẩm đã hết hàng.");
+      $("body").append(
+        `<div class="toast toast-error">Sản phẩm đã hết hàng.</div>`
+      );
+      $(".toast").fadeIn().delay(3000).fadeOut(function () {
+        $(this).remove();
+      });
+    }
+  };
 
   const handleAddToCart = async (productDetailId) => {
-    const isAuthenticated = !!localStorage.getItem("isAuthenticated");
-    const userId = localStorage.getItem("userId");
     const token = localStorage.getItem("token");
-
-    console.log("ProductDetail ID:", productDetailId);
-    console.log("Quantity:", quantity);
-    console.log("User ID:", userId);
-
     if (!token) {
       toastr.error("Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng.");
+      return;
+    }
+
+    const totalQuantityInCart = getProductQuantityInCart() + quantity;
+    if (totalQuantityInCart > stockAvailable) {
+      toastr.error(`Số lượng trong giỏ hàng đã vượt quá ${stockAvailable} sản phẩm.`);
       return;
     }
 
@@ -90,42 +118,59 @@ const ProductDetail = () => {
       await CartService.addToCart(
         productDetailId,
         quantity,
-        userId,
+        localStorage.getItem("userId"),
         token,
-        product.productName,
+        productDetail.productName,
         stockAvailable
       );
+      toastr.success("Sản phẩm đã được thêm vào giỏ hàng.");
     } catch (error) {
       console.error(error);
     }
   };
 
   const handleCheckout = () => {
-    if (
-      CartService.checkoutCart(quantity, stockAvailable, product.productName)
-    ) {
-      // Tiến hành thanh toán, nếu cần.
+    if (CartService.checkoutCart(quantity, stockAvailable, productDetail.productName)) {
+      // Proceed with checkout, if necessary
     }
   };
+
+  if (loading) {
+    return <div className="text-center py-10 text-lg">Đang tải...</div>;
+  }
+
+  if (error) {
+    return <div className="text-center py-10 text-lg text-red-600">{error}</div>;
+  }
+
+  if (!productDetail) {
+    return <div className="text-center py-10 text-lg text-red-600">Không tìm thấy sản phẩm.</div>;
+  }
+
+  const { product, price } = productDetail;
 
   return (
     <>
       <Header />
       <div className="container mx-auto my-10 p-8 bg-white shadow-lg rounded-lg">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          {/* Product Image Section */}
           <div className="flex justify-center items-center">
             <img
               src={product?.imageUrl || "default_image_url.jpg"}
               alt={product?.productName || "Sản phẩm"}
-              className="rounded-lg w-full lg:w-3/4 h-auto object-cover shadow-lg"
+              className="rounded-lg w-full lg:w-2/3 h-auto object-cover shadow-lg transition-transform duration-500 ease-in-out transform hover:scale-110"
             />
           </div>
+          {/* Product Details Section */}
           <div className="lg:pl-8">
-            <h1 className="text-4xl font-semibold text-gray-900">
+            <h1 className="text-4xl font-bold text-gray-900 leading-tight">
               {product?.productName || "Tên sản phẩm"}
             </h1>
-            <p className="text-3xl text-red-600 mt-4">
-              {price || "Giá sản phẩm"}₫
+            <p className="text-3xl text-red-600 mt-4 font-semibold">{price || "Giá sản phẩm"}₫</p>
+
+            <p className="text-lg text-gray-700 mt-4">
+              <strong>Tồn kho:</strong> {stockAvailable || 0} sản phẩm
             </p>
 
             <div className="mt-6">
@@ -140,39 +185,63 @@ const ProductDetail = () => {
                 type="number"
                 value={quantity}
                 onChange={handleQuantityChange}
-                className="mt-2 block w-24 border border-gray-300 rounded-md p-2 text-center"
-                min="1"
+                className="mt-2 block w-24 border border-gray-300 rounded-md p-2 text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                min="0"
                 max={stockAvailable}
+                disabled={stockAvailable === 0}
               />
-              {quantity > stockAvailable && (
-                <p className="text-red-500 mt-2">
-                  Bạn chỉ có thể thêm tối đa {stockAvailable} sản phẩm.
-                </p>
-              )}
             </div>
 
             <p className="mt-8 text-lg text-gray-700 font-semibold">
               Mô tả sản phẩm:
             </p>
-            <p className="text-gray-600 mt-2">
+            <p className="text-gray-600 mt-2 leading-relaxed">
               {product?.description || "Không có mô tả"}
             </p>
 
             <div className="mt-10 flex space-x-4">
               <button
                 onClick={() => handleAddToCart(productDetail.productDetailId)}
-                className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg transition duration-300 ease-in-out"
+                className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg transition-transform duration-300 ease-in-out transform hover:scale-105"
+                disabled={quantity > stockAvailable || stockAvailable === 0}
               >
                 Thêm vào giỏ
               </button>
 
               <button
                 onClick={handleCheckout}
-                className="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg transition duration-300 ease-in-out"
+                className="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg shadow-lg transition-transform duration-300 ease-in-out transform hover:scale-105"
               >
                 Thanh toán
               </button>
             </div>
+          </div>
+        </div>
+
+        {/* Related Products Section */}
+        <div className="mt-12">
+          <h2 className="text-2xl font-bold text-gray-900">Sản phẩm liên quan</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mt-6">
+            {allProducts.map((product) => (
+              <div
+                key={product.id}
+                className="bg-white rounded-lg shadow-md hover:shadow-xl transition-transform duration-300 ease-in-out transform hover:scale-105"
+              >
+                <img
+                  src={product.imageUrl || "default_image_url.jpg"}
+                  alt={product.productName}
+                  className="w-full h-48 object-cover rounded-t-lg"
+                />
+                <div className="p-4">
+                  <h3 className="text-xl font-semibold text-gray-900">
+                    {product.productName}
+                  </h3>
+                  <p className="text-lg text-red-600 mt-2">
+                    {product.price}₫
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
