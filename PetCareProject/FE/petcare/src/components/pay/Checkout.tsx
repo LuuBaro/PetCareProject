@@ -2,8 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Header from "../header/Header";
 import Modal from "react-modal";
-import AddressForm from "../pay/AddressForm";
 import Swal from "sweetalert2";
+import AddressModal from "./AddressModal";
 
 interface Product {
   productId: number;
@@ -180,89 +180,181 @@ const Checkout: React.FC = () => {
   };
 
   return (
-    <div>
-      <Header />
-      <div className="bg-gray-100 min-h-screen p-4">
-        <div className="bg-white shadow-md rounded-lg p-6">
-          <div className="flex items-center mb-4">
-            <h1 className="text-2xl font-bold text-[#00b7c0]">Thanh Toán</h1>
-          </div>
-
-          {/* Địa chỉ giao hàng */}
-          <div className="border-t border-b py-4 mb-4">
-            <div className="flex items-center mb-2">
-              <i className="fas fa-map-marker-alt text-red-500 mr-2"></i>
-              <span className="font-bold">Địa Chỉ Nhận Hàng</span>
+      <div>
+        <Header />
+        <div className="bg-gray-100 min-h-screen p-4">
+          <div className="bg-white shadow-md rounded-lg p-6">
+            <div className="flex items-center mb-4">
+              <h1 className="text-2xl font-bold text-[#00b7c0]">Thanh Toán</h1>
             </div>
-            <div className="ml-6">
-              <p className="font-bold mb-2">
-                {loading ? "Đang tải..." : address || "Chưa có địa chỉ nào."}
-              </p>
-              <button onClick={openModal} className="text-blue-500">
-                Thay Đổi
-              </button>
-            </div>
-          </div>
 
-          {/* Danh sách sản phẩm */}
-          <div>
-            <table className="w-full table-auto mb-4">
-              <thead>
+            {/* Địa chỉ giao hàng */}
+            <div className="border-t border-b py-4 mb-4">
+              <div className="flex items-center mb-2">
+                <i className="fas fa-map-marker-alt text-red-500 mr-2"></i>
+                <span className="font-bold">Địa Chỉ Nhận Hàng</span>
+              </div>
+              <div className="ml-6">
+                {/*<p className="font-bold mb-2"></p>*/}
+                <p className="font-bold mb-2">
+                  {loading ? "Loading..." : address || "Chưa có địa chỉ nào."}
+                </p>
+                <button onClick={openModal} className="text-blue-500">
+                  Thay Đổi
+                </button>
+              </div>
+            </div>
+
+            {/* Danh sách sản phẩm */}
+            <div>
+              <table className="w-full table-auto mb-4">
+                <thead>
                 <tr className="border-b-2 border-[#F2BC27] font-bold text-xl">
                   <th className="p-2 text-left">Sản phẩm</th>
                   <th className="p-2 text-left">Đơn giá</th>
                   <th className="p-2 text-left">Số lượng</th>
                   <th className="p-2 text-right">Thành tiền</th>
                 </tr>
-              </thead>
-              <tbody>
+                </thead>
+                <tbody>
                 {products.map((product) => (
-                  <tr key={product.productId} className="border-t">
-                    <td className="p-2 flex items-center">
-                      <img
-                        src={product.image}
-                        alt={product.productName}
-                        className="w-16 h-16 object-cover rounded-lg mr-4"
-                      />
-                      <span>{product.productName}</span>
-                    </td>
-                    <td className="p-2">{formatPrice(product.price)}</td>
-                    <td className="p-2">{product.quantity}</td>
-                    <td className="p-2 text-right">
-                      {formatPrice(product.price * product.quantity)}
-                    </td>
-                  </tr>
+                    <tr key={product.productId} className="border-t">
+                      <td className="p-2 flex items-center">
+                        <img
+                            src={product.image}
+                            alt={product.productName}
+                            className="w-16 h-16 object-cover rounded-lg mr-4"
+                        />
+                        <span>{product.productName}</span>
+                      </td>
+                      <td className="p-2">{formatPrice(product.price)}</td>
+                      <td className="p-8 text-left">{product.quantity}</td>
+                      <td className="p-2 text-right font-bold">
+                        {formatPrice(product.price * product.quantity)}
+                      </td>
+                    </tr>
                 ))}
-              </tbody>
-            </table>
-            <div className="flex justify-between">
-              <span className="font-bold text-xl">Tổng cộng:</span>
-              <span className="font-bold text-xl text-[#00b7c0]">
-                {formatPrice(total)}
-              </span>
+                </tbody>
+              </table>
+            </div>
+
+            {/* Voucher và phương thức thanh toán */}
+            <div className="border-b pb-4 mb-4">
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex items-center">
+                  <i className="fas fa-ticket-alt text-red-500 mr-2"></i>
+                  <span className="text-lg">PetCare Voucher</span>
+                </div>
+                <a href="#" className="text-blue-500">
+                  Chọn Voucher
+                </a>
+              </div>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center">
+                  <i className="fas fa-coins text-yellow-500 mr-2"></i>
+                  <span className="text-lg">PetCare Xu</span>
+                </div>
+                <span className="text-gray-500">Không thể sử dụng Xu</span>
+              </div>
+            </div>
+
+            {/* Phương thức thanh toán */}
+            <div className="border-b pb-4 mb-4">
+              <div className="text-lg font-semibold mb-2">
+                Phương thức thanh toán
+              </div>
+              <div className="flex justify-between items-center">
+                <span>Thanh toán khi nhận hàng</span>
+                <a href="" className="text-blue-500">
+                  THAY ĐỔI
+                </a>
+              </div>
+            </div>
+
+            {/* Tổng số tiền */}
+            <div className="bg-gray-50 p-4 mb-4">
+              <div className="flex justify-between items-center mb-4">
+                <span>Tổng tiền hàng</span>
+                <span>{formatPrice(total)}</span>
+              </div>
+              <div className="flex justify-between items-center mb-2">
+                <span>Phí vận chuyển</span>
+                <span>15.000 ₫</span> {/* Static for now */}
+              </div>
+            </div>
+            {/* Tổng cộng */}
+            <div className="mt-6 text-right">
+              <h2 className="text-xl font-bold text-red-500">
+                Tổng cộng: {formatPrice(total + 15000)}
+              </h2>
+              <button
+                  onClick={handlePayment}
+                  className="bg-[#00b7c0] text-white px-6 py-2 rounded-lg hover:bg-[#41797c] transition duration-300 mt-4"
+              >
+                Đặt hàng
+              </button>
+            </div>
+            <div className="text-center text-gray-500 text-sm mt-4">
+              Nhấn "Đặt hàng" đồng nghĩa với việc bạn đồng ý tuân theo{" "}
+              <a href="#" className="text-blue-500">
+                Điều khoản PetCare
+              </a>
             </div>
           </div>
-
-          <div className="flex justify-center mt-6">
-            <button
-              onClick={handlePayment}
-              className="bg-[#00b7c0] text-white px-6 py-3 rounded-full font-bold"
-            >
-              Thanh toán
-            </button>
-          </div>
         </div>
-      </div>
 
-      {/* Modal for Address Form */}
-      <Modal isOpen={modalIsOpen} onRequestClose={closeModal} contentLabel="Address Modal">
-        <h2 className="text-2xl font-bold mb-4">Chỉnh sửa địa chỉ</h2>
-        <AddressForm saveAddress={saveAddress} />
-        <button onClick={closeModal} className="mt-4 bg-red-500 text-white px-4 py-2 rounded">
-          Đóng
-        </button>
-      </Modal>
-    </div>
+        {/* Modal để chọn địa chỉ */}
+        <Modal
+            isOpen={modalIsOpen}
+            onRequestClose={closeModal}
+            contentLabel="Chọn Địa Chỉ"
+            ariaHideApp={false}
+            style={{
+              content: {
+                width: "60%", // Tăng kích thước modal
+                maxWidth: "800px", // Đảm bảo modal không quá lớn
+                height: "70%", // Tăng chiều cao của modal
+                margin: "auto", // Canh giữa modal
+                borderRadius: "10px", // Bo góc nhẹ
+                padding: "20px", // Thêm khoảng cách bên trong modal
+                boxShadow: "0 4px 10px rgba(0, 0, 0, 0.2)", // Thêm shadow để modal nổi bật hơn
+              },
+            }}
+        >
+          <div className="modal-header">
+            <h2 className="text-xl font-bold text-center">
+              Chọn Địa Chỉ Giao Hàng
+            </h2>
+          </div>
+          <div className="modal-body">
+            <AddressModal
+                isOpen={modalIsOpen}
+                onClose={closeModal}
+                userId={userId}
+                onAddressSelected={(addressId) => {
+                  // Fetch the full address from the API based on the addressId
+                  fetch(`http://localhost:8080/api/addresses/${addressId}`, {
+                    headers: {
+                      Authorization: `Bearer ${token}`,
+                    },
+                  })
+                      .then((res) => {
+                        if (!res.ok) {
+                          throw new Error("Network response was not ok");
+                        }
+                        return res.json();
+                      })
+                      .then((data) => setAddress(data)) // Store the whole address object
+                      .catch((error) =>
+                          console.error("Error fetching address:", error)
+                      );
+                  setRefreshCheckout((prev) => prev + 1);
+                }}
+                currentCheckoutAddressId={address?.addressId ?? null}
+            />
+          </div>
+        </Modal>
+      </div>
   );
 };
 
