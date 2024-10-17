@@ -29,6 +29,7 @@ const User: React.FC = () => {
     setStatusIndex(index); // Cập nhật trạng thái hiện tại
   };
 
+
   // Hàm lấy đơn hàng theo userId
   const fetchOrders = async () => {
     if (!userId) {
@@ -64,24 +65,48 @@ const User: React.FC = () => {
     }
   };
 
+  const checkForStatusChange = async () => {
+    try {
+      const response = await axios.get(`http://localhost:8080/api/status-orders`); // Fetch current orders
+      const currentOrders = response.data;
+
+      // Check if the status of any order has changed
+      for (let i = 0; i < orders.length; i++) {
+        if (orders[i].statusOrderId !== currentOrders[i].statusOrderId) {
+          // Status has changed, reload the page
+          window.location.reload();
+          break;
+        }
+      }
+    } catch (error) {
+      console.error("Error checking order status:", error);
+    }
+  };
+
   useEffect(() => {
     fetchOrders();
     fetchStatusOrders();
+
+    const interval = setInterval(() => {
+      checkForStatusChange();
+    }, 1000); // Check every 4 seconds
+
+    return () => clearInterval(interval); // Cleanup on unmount
   }, []);
 
   const renderOrders = () => {
     const statusOrdersMap = new Map(
       statusOrders.map((status) => [status.statusOrderId, status.statusName])
     );
-  
+
     if (orders.length === 0) {
       return <div className="text-gray-500">Bạn chưa có đơn hàng nào.</div>;
     }
-  
+
     return orders.map((order) => {
       const statusName =
         statusOrdersMap.get(order.statusOrderId) || "Chưa xác định";
-  
+
       // Lấy chỉ số của trạng thái hiện tại
       const statusIndex =
         statusOrders.length > 0
@@ -89,10 +114,10 @@ const User: React.FC = () => {
               (status) => status.statusOrderId === order.statusOrderId
             )
           : -1;
-  
+
       // Kiểm tra trạng thái "Đã hủy"
       const isCancelled = statusName === "Đã hủy";
-  
+
       return (
         <div
           key={order.orderId}
@@ -121,8 +146,8 @@ const User: React.FC = () => {
              Đơn hàng đã hủy
            </span>
          </div>
-         
-         
+
+
           ) : (
             <ProgressBar
               statusIndex={statusIndex}
@@ -130,7 +155,7 @@ const User: React.FC = () => {
               statusLabels={statusLabels}
             />
           )}
-  
+
           {/* Nội dung đơn hàng */}
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-bold text-[#00b7c0]">
@@ -140,7 +165,7 @@ const User: React.FC = () => {
               {new Date(order.orderDate).toLocaleString()}
             </span>
           </div>
-  
+
           <div className="mb-4 p-4 border border-gray-200 rounded bg-gray-50">
             <p className="font-semibold mb-2">
               Họ tên: <span className="font-normal">{order.fullName}</span>
@@ -152,7 +177,7 @@ const User: React.FC = () => {
               Email: <span className="font-normal">{order.email}</span>
             </p>
           </div>
-  
+
           <div className="mb-4">
             <p className="text-sm">
               Trạng thái:{" "}
@@ -161,7 +186,7 @@ const User: React.FC = () => {
                   isCancelled ? "text-red-600" : "text-green-600"
                 }`}
               >
-                {statusName}
+                {order.status}
               </span>
             </p>
             <p className="text-sm">
@@ -180,7 +205,7 @@ const User: React.FC = () => {
               <span className="font-semibold">{order.paymentMethod}</span>
             </p>
           </div>
-  
+
           <h4 className="font-semibold text-md mt-4 text-[#00b7c0]">
             Thông tin sản phẩm:
           </h4>
@@ -213,9 +238,9 @@ const User: React.FC = () => {
       );
     });
   };
-  
-  
-  
+
+
+
 
   return (
     <>

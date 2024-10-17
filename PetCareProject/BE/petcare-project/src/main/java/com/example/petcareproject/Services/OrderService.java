@@ -42,14 +42,24 @@ public class OrderService {
 
     public void processOrder(OrderController.CheckoutRequest request) {
         // Tìm người dùng theo userId
+        Order order = new Order();
+        OrderDTO orderDTO = new OrderDTO();
         User user = userRepository.findById(request.userId)
                 .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
-
+        orderDTO.setPaymentMethod(request.getPaymentMethod());
         // Tạo đối tượng Order
-        Order order = new Order();
         order.setOrderDate(new java.util.Date());
-        order.setPaymentMethod("Thanh toán khi nhận hàng");
-        order.setPaymentStatus("Chưa thanh toán");
+        if ("COD".equalsIgnoreCase(request.paymentMethod))  {
+            order.setPaymentMethod("Thanh toán khi nhận hàng"); // Cash on Delivery
+            order.setPaymentStatus("Chưa thanh toán");
+        } else if ("VNPAY".equalsIgnoreCase(request.paymentMethod)) {
+            order.setPaymentMethod("Thanh toán bằng VNPay"); // VNPay
+            order.setPaymentStatus("Đã thanh toán");
+        } else {
+            order.setPaymentMethod("Không xác định"); // Handle unexpected payment methods
+            order.setPaymentStatus("Chưa thanh toán");
+        }
+
         order.setShippingAddress(request.address);
         order.setShippingCost(15000); // Phí vận chuyển
         order.setTotalAmount(request.total + 15000); // Tổng tiền + phí vận chuyển

@@ -55,6 +55,9 @@
                                     "/api/orders/**",
                                     "/api/user/**",
                                     "/api/status-orders/**",
+                                    "/api/pay/**",
+                                    "/api/create-payment/**",
+                                    "/api/payment-result/**",
                                     "/css/**",
                                     "/js/**",
                                     "/"

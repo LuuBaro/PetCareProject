@@ -1,12 +1,13 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'https://online-gateway.ghn.vn/shiip/public-api/master-data'; // Base URL của API Giao Hàng Nhanh
+const API_BASE_URL = 'https://online-gateway.ghn.vn/shiip/public-api'; // Base URL của API Giao Hàng Nhanh
 const TOKEN = '0fe4c8c9-71cd-11ef-9839-ea1b8b4124d2'; // Thay bằng token thật của bạn
 const API_BE = 'http://localhost:8080/api'; // Thay bằng URL backend của bạn
+const SHOP_ID = '5321275'; // Thay bằng shop ID của bạn
 
 export const getProvinces = async () => {
     try {
-        const response = await axios.get(`${API_BASE_URL}/province`, {
+        const response = await axios.get(`${API_BASE_URL}/master-data/province`, {
             headers: {'Token': TOKEN}
         });
         if (response.data.code === 200) {
@@ -15,14 +16,15 @@ export const getProvinces = async () => {
             throw new Error(response.data.message);
         }
     } catch (error) {
-        console.error('Lỗi khi lấy danh sách tỉnh/thành phố:', error);
+        console.error('Error fetching provinces:', error);
         throw error;
     }
 };
 
+// Fetch Districts by Province ID
 export const getDistricts = async (provinceId) => {
     try {
-        const response = await axios.post(`${API_BASE_URL}/district`, {
+        const response = await axios.post(`${API_BASE_URL}/master-data/district`, {
             province_id: provinceId
         }, {
             headers: {
@@ -36,14 +38,15 @@ export const getDistricts = async (provinceId) => {
             throw new Error(response.data.message);
         }
     } catch (error) {
-        console.error('Lỗi khi lấy danh sách quận/huyện:', error);
+        console.error('Error fetching districts:', error);
         throw error;
     }
 };
 
+// Fetch Wards by District ID
 export const getWards = async (districtId) => {
     try {
-        const response = await axios.post(`${API_BASE_URL}/ward`, {
+        const response = await axios.post(`${API_BASE_URL}/master-data/ward`, {
             district_id: districtId
         }, {
             headers: {
@@ -57,7 +60,42 @@ export const getWards = async (districtId) => {
             throw new Error(response.data.message);
         }
     } catch (error) {
-        console.error('Lỗi khi lấy danh sách phường/xã:', error);
+        console.error('Error fetching wards:', error);
+        throw error;
+    }
+};
+
+// Calculate Shipping Fee
+export const calculateShippingFee = async (toDistrictId, toWardCode, weight, length, width, height) => {
+    try {
+        const payload = {
+            service_id: 53320,
+            insurance_value: 500000,
+            to_district_id: toDistrictId,
+            to_ward_code: toWardCode,
+            height: height,
+            length: length,
+            weight: weight,
+            width: width,
+            shop_id: SHOP_ID,
+        };
+
+        console.log('Request payload:', payload);
+
+        const response = await axios.post(`${API_BASE_URL}/v2/shipping-order/fee`, payload, {
+            headers: {
+                'Token': TOKEN,
+                'Content-Type': 'application/json',
+            }
+        });
+
+        if (response.data.code === 200) {
+            return response.data.data.total;
+        } else {
+            throw new Error(response.data.message);
+        }
+    } catch (error) {
+        console.error('Error calculating shipping fee:', error);
         throw error;
     }
 };

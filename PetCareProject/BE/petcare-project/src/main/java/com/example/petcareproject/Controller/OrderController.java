@@ -12,15 +12,27 @@ import com.example.petcareproject.dto.CancellationRequest;
 import com.example.petcareproject.dto.OrderDTO;
 import com.example.petcareproject.dto.OrderDetailDTO;
 import jakarta.transaction.Transactional;
+import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
 @RestController
 @RequestMapping("/api")
 public class OrderController {
+
+    @Data
+    public static class CheckoutRequest {
+        public List<OrderDetailDTO> products;
+        public double total;
+        public String address;
+        public Long userId; // Thêm userId
+        public String paymentMethod;
+    }
+
     @Autowired
     private OrderDetailsService orderDetailsService;
 
@@ -54,12 +66,7 @@ public class OrderController {
         }
     }
 
-    public static class CheckoutRequest {
-        public List<OrderDetailDTO> products;
-        public double total;
-        public String address;
-        public Long userId; // Thêm userId
-    }
+
 
     @GetMapping("/{orderId}")
     public ResponseEntity<OrderDTO> getOrderDetails(@PathVariable Long orderId) {
@@ -102,8 +109,6 @@ public class OrderController {
         orderService.processOrderCancellation(orderId, reason); // Truyền lý do từ frontend
         return ResponseEntity.ok("Đơn hàng đã được hủy và email thông báo đã được gửi");
     }
-
-
 
 
 }
