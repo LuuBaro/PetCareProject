@@ -230,14 +230,23 @@ const ProductDetail = () => {
           <div className="mt-12">
             <h2 className="text-2xl font-bold text-gray-900">Sản phẩm liên quan</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mt-6">
-              {allProducts.map((product) => (
-                  <ProductItem
+              {allProducts.slice(0, 4).map((product) => (
+                  <div
                       key={product.id}
-                      name={product.productName}
-                      price={product.price}
-                      image={product.imageUrl}
-                      rating={product.rating}
-                  />
+                      className="bg-white rounded-lg shadow-md hover:shadow-xl transition-transform duration-300 ease-in-out transform hover:scale-105"
+                  >
+                    <img
+                        src={product.imageUrl || "default_image_url.jpg"}
+                        alt={product.productName}
+                        className="w-full h-48 object-cover rounded-t-lg"
+                    />
+                    <div className="p-4">
+                      <h3 className="text-xl font-semibold text-gray-900">
+                        {product.productName}
+                      </h3>
+                      <p className="text-lg text-red-600 mt-2">{product.price}₫</p>
+                    </div>
+                  </div>
               ))}
             </div>
           </div>
