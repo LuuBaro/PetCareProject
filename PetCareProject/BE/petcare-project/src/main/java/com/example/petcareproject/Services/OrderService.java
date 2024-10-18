@@ -41,6 +41,7 @@ public class OrderService {
     private EmailService emailService; // Thêm EmailService vào đây
 
     public void processOrder(OrderController.CheckoutRequest request) {
+<<<<<<< Updated upstream
         // Tìm người dùng theo userId
         User user = userRepository.findById(request.userId)
                 .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
@@ -50,18 +51,46 @@ public class OrderService {
         order.setOrderDate(new java.util.Date());
         order.setPaymentMethod("Thanh toán khi nhận hàng");
         order.setPaymentStatus("Chưa thanh toán");
+=======
+        // Tạo đối tượng Order mới
+        Order order = new Order();
+        OrderDTO orderDTO = new OrderDTO(); // Chưa sử dụng trong đoạn code này
+        // Tìm người dùng theo userId
+        User user = userRepository.findById(request.userId)
+                .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại"));
+
+        // Thiết lập phương thức thanh toán dựa trên thông tin từ yêu cầu
+        order.setPaymentMethod(request.getPaymentMethod());
+
+        // Tạo đối tượng Order
+        order.setOrderDate(new java.util.Date()); // Lưu ngày đặt hàng
+
+        // Xác định phương thức và trạng thái thanh toán
+        if ("COD".equalsIgnoreCase(request.paymentMethod)) {
+            order.setPaymentMethod("Thanh toán khi nhận hàng"); // Cash on Delivery
+            order.setPaymentStatus("Chưa thanh toán");
+        } else if ("VNPAY".equalsIgnoreCase(request.paymentMethod)) {
+            order.setPaymentMethod("Thanh toán bằng VNPay"); // VNPay
+            order.setPaymentStatus("Đã thanh toán");
+        } else {
+            order.setPaymentMethod("Không xác định"); // Handle unexpected payment methods
+            order.setPaymentStatus("Chưa thanh toán");
+        }
+
+        // Thiết lập địa chỉ giao hàng và phí vận chuyển
+>>>>>>> Stashed changes
         order.setShippingAddress(request.address);
         order.setShippingCost(15000); // Phí vận chuyển
         order.setTotalAmount(request.total + 15000); // Tổng tiền + phí vận chuyển
-        order.setType(true);
-        order.setPointEarned(0);
-        order.setPointUsed(0);
-        order.setUser(user);
+        order.setType(true); // Chưa rõ mục đích
+        order.setPointEarned(0); // Điểm tích lũy
+        order.setPointUsed(0); // Điểm đã sử dụng
+        order.setUser(user); // Gán người dùng
 
-        // Truy xuất trạng thái từ cơ sở dữ liệu
+        // Tạo đối tượng StatusOrder cho đơn hàng
         StatusOrder defaultStatus = new StatusOrder();
         defaultStatus.setStatusOrderId(1L); // ID cho "Chờ xác nhận"
-        order.setStatusOrder(defaultStatus);
+        order.setStatusOrder(defaultStatus); // Gán trạng thái cho đơn hàng
 
         // Lưu Order vào DB
         Order savedOrder = orderRepository.save(order);
@@ -76,12 +105,12 @@ public class OrderService {
             OrderDetail orderDetail = new OrderDetail();
             orderDetail.setQuantity(productDTO.getQuantity());
             orderDetail.setPrice(productDTO.getPrice());
-            orderDetail.setOrder(savedOrder);
+            orderDetail.setOrder(savedOrder); // Gán đơn hàng
             orderDetail.setProductDetail(productDetail); // Gán ProductDetail tìm được
-            orderDetailRepository.save(orderDetail);
+            orderDetailRepository.save(orderDetail); // Lưu chi tiết đơn hàng
         }
-
     }
+
 
     @Transactional
     public void updateOrderStatus(Long orderId, Long statusId) {

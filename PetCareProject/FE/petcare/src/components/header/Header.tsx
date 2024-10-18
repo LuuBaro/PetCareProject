@@ -43,6 +43,7 @@ export default function Header() {
     localStorage.removeItem("userId");
     localStorage.removeItem("isAuthenticated");
     localStorage.removeItem("fullName");
+    localStorage.removeItem("orderInfo");
     setIsAuthenticated(false);
     navigate("/"); // Chuyển về trang chủ
   };

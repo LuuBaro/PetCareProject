@@ -55,6 +55,13 @@
                                     "/api/orders/**",
                                     "/api/user/**",
                                     "/api/status-orders/**",
+<<<<<<< Updated upstream
+=======
+                                    "/api/pay/**",
+                                    "/api/create-payment/**",
+                                    "/api/payment-result/**",
+                                    "api/confirmPayment/**",
+>>>>>>> Stashed changes
                                     "/css/**",
                                     "/js/**",
                                     "/"

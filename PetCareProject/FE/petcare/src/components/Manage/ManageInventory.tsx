@@ -51,6 +51,7 @@ const OrderManagement: React.FC = () => {
     { id: "Trả hàng", label: "Trả hàng/Hoàn tiền" },
   ];
 
+<<<<<<< Updated upstream
   useEffect(() => {
     const fetchOrders = async () => {
       try {
@@ -64,6 +65,44 @@ const OrderManagement: React.FC = () => {
     };
     fetchOrders();
   }, []);
+=======
+    const getStatusColor = (status: string) => {
+        switch (status.toLowerCase()) {
+            case "chờ xác nhận":
+                return "text-orange-400 font-bold"; // Màu xám đậm cho trạng thái chờ xác nhận
+            case "đang vận chuyển":
+                return "text-blue-500 font-bold"; // Màu xanh dương cho trạng thái đang vận chuyển
+            case "chờ giao hàng":
+                return "text-green-500 font-bold"; // Màu tím cho trạng thái chờ giao hàng
+            case "hoàn thành":
+                return "text-[#52b7c0] font-bold"; // Màu cyan cho trạng thái hoàn thành
+            case "đã hủy":
+                return "text-red-600 font-bold"; // Màu đỏ cho trạng thái đã hủy
+            case "trả hàng":
+                return "text-orange-500 font-bold"; // Màu cam cho trạng thái trả hàng
+            default:
+                return "text-gray-500 font-bold"; // Màu xám mặc định
+        }
+    };
+
+    useEffect(() => {
+        const fetchOrders = async () => {
+            try {
+                const response = await axios.get(`http://localhost:8080/api/all`);
+                // Sắp xếp danh sách đơn hàng theo ngày đặt hàng, đơn hàng mới nhất ở trên cùng
+                const sortedOrders = response.data.sort(
+                    (a: Order, b: Order) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime()
+                );
+                setOrders(sortedOrders);
+            } catch (error) {
+                console.error("Lỗi khi tìm nạp đơn đặt hàng", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchOrders();
+    }, []);
+>>>>>>> Stashed changes
 
   const handleTabChange = (tabId: string) => {
     setActiveTab(tabId);
@@ -125,10 +164,144 @@ const filteredOrders = orders
       "Trả hàng": 6,
     };
 
+<<<<<<< Updated upstream
     const statusId = statusMap[newStatus];
     if (!statusId) {
       console.error("Invalid status ID:", newStatus);
       return;
+=======
+    // Lọc đơn hàng dựa trên tab hiện tại và từ khóa tìm kiếm
+    const filteredOrders = orders
+        // Bước 1: Lọc theo tab hiện tại (nếu không phải "all")
+        .filter((order) => activeTab === "all" || order.status?.toLowerCase() === activeTab.toLowerCase())
+        // Bước 2: Lọc tiếp theo từ khóa tìm kiếm
+        .filter((order) => {
+            const searchLower = searchTerm.toLowerCase();
+
+            // Kiểm tra tất cả các thông tin trong đơn hàng
+            const orderInfo = [
+                order.fullName?.toLowerCase() || '', // Thêm kiểm tra null/undefined
+                order.email?.toLowerCase() || '',
+                order.status?.toLowerCase() || '',
+                order.phoneNumber?.toLowerCase() || '',
+                order.shippingAddress?.toLowerCase() || '',
+                order.paymentMethod?.toLowerCase() || '',
+                order.totalAmount?.toString().toLowerCase() || '',
+                order.orderDate?.toLowerCase() || '',
+            ];
+
+            // Kiểm tra trong thông tin chi tiết sản phẩm
+            const productInfo = order.orderDetails.some((detail) =>
+                [
+                    detail.productName?.toLowerCase() || '', // Thêm kiểm tra null/undefined
+                    detail.price?.toString().toLowerCase() || '',
+                    detail.quantity?.toString().toLowerCase() || '',
+                ].some((field) => field.includes(searchLower))
+            );
+
+            // Nếu từ khóa tìm thấy trong bất kỳ trường nào
+            return orderInfo.some((field) => field.includes(searchLower)) || productInfo;
+        });
+
+
+    const handleCheckboxChange = (orderId: number) => {
+        const updatedSelection = new Set(selectedOrders);
+        if (updatedSelection.has(orderId)) {
+            updatedSelection.delete(orderId);
+        } else {
+            updatedSelection.add(orderId);
+        }
+        setSelectedOrders(updatedSelection);
+    };
+
+    const handleOrderAction = async (newStatus: string) => {
+        const statusMap: Record<string, number> = {
+            "Chờ xác nhận": 1,
+            "Đang vận chuyển": 2,
+            "Chờ giao hàng": 3,
+            "Hoàn thành": 4,
+            "Đã hủy": 5,
+            "Trả hàng": 6,
+        };
+
+        const statusId = statusMap[newStatus];
+        if (!statusId) {
+            console.error("Invalid status ID:", newStatus);
+            return;
+        }
+
+        const updatedOrders = [...orders];
+
+        await Promise.all(
+            Array.from(selectedOrders).map(async (orderId) => {
+                try {
+                    const response = await axios.put(
+                        `http://localhost:8080/api/${orderId}/status/${statusId}`
+                    );
+
+                    if (response.status === 200) {
+                        const orderIndex = updatedOrders.findIndex(
+                            (order) => order.orderId === orderId
+                        );
+                        if (orderIndex !== -1) {
+                            updatedOrders[orderIndex] = {
+                                ...updatedOrders[orderIndex],
+                                status: newStatus,
+                                statusOrderId: statusId,
+                            };
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error updating order status:", error);
+                }
+            })
+        );
+
+        setOrders(updatedOrders);
+        setSelectedOrders(new Set());
+    };
+
+    const handleCancel = () => {
+        setShowCancelModal(true);
+    };
+
+    const confirmCancel = async () => {
+        const selectedOrderIds = Array.from(selectedOrders);
+        setIsSendingEmail(true);
+
+        try {
+            for (const orderId of selectedOrderIds) {
+                const response = await axios.put(
+                    `http://localhost:8080/api/cancel/${orderId}`,
+                    null,
+                    {
+                        params: {
+                            reason:
+                                selectedCancelReason === "Khác"
+                                    ? cancelReason
+                                    : selectedCancelReason,
+                        },
+                    }
+                );
+
+                if (response.status === 200) {
+                    handleOrderAction("Đã hủy");
+                }
+            }
+
+            setShowCancelModal(false);
+            setCancelReason("");
+            setSelectedCancelReason("");
+        } catch (error) {
+            console.error("Error canceling order:", error);
+        } finally {
+            setIsSendingEmail(false);
+        }
+    };
+
+    if (loading) {
+        return <div className="text-center">Loading...</div>;
+>>>>>>> Stashed changes
     }
 
     const updatedOrders = [...orders];
@@ -158,6 +331,7 @@ const filteredOrders = orders
       })
     );
 
+<<<<<<< Updated upstream
     setOrders(updatedOrders);
     setSelectedOrders(new Set());
   };
@@ -336,6 +510,63 @@ const filteredOrders = orders
           </table>
         )}
       </div>
+=======
+            <div className="overflow-x-auto">
+                {filteredOrders.length === 0 ? (
+                    <div className="text-center text-gray-600">
+                        Không tìm thấy đơn hàng nào.
+                    </div>
+                ) : (
+                    <table className="min-w-full border-collapse bg-white shadow-md">
+                        <thead className="bg-gray-100 text-gray-600 text-sm">
+                        <tr>
+                            <th className="border p-2">Sản phẩm</th>
+                            <th className="border p-2">Doanh thu đơn hàng</th>
+                            <th className="border p-2">Phương thức thanh toán</th>
+                            <th className="border p-2">Thời gian tạo đơn</th>
+                            <th className="border p-2">Thông tin khách hàng</th>
+                            <th className="border p-2">Trạng thái</th>
+                            <th className="border p-2">Chọn</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                            {filteredOrders.map((order) => (
+                                <tr key={order.orderId} className="text-sm hover:bg-gray-50">
+                                    <td className="border p-2">
+                                        {order.orderDetails.map((detail) => (
+                                            <div key={detail.productId} className="flex items-center mb-2">
+                                                <img
+                                                    src={detail.productImage}
+                                                    alt={detail.productName}
+                                                    className="w-16 h-16 object-cover rounded mr-2"
+                                                />
+                                                <span>{detail.productName} (x{detail.quantity})</span>
+                                            </div>
+                                        ))}
+                                    </td>
+                                    <td className="border p-2">{order.totalAmount.toLocaleString()} VNĐ</td>
+                                    <td className="border p-2">{order.paymentMethod}</td>
+                                    <td className="border p-2">{new Date(order.orderDate).toLocaleString()}</td>
+                                    <td className="border p-2">
+                                        {order.fullName} - {order.phoneNumber} - {order.email}
+                                    </td>
+                                    <td className={`border p-2 ${getStatusColor(order.status)}`}>
+                                        {order.status}
+                                    </td>
+                                    <td className="border p-2 text-center">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedOrders.has(order.orderId)}
+                                            onChange={() => handleCheckboxChange(order.orderId)}
+                                        />
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
+            </div>
+>>>>>>> Stashed changes
 
       {showCancelModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50">

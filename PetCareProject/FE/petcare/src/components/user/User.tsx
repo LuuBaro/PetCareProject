@@ -67,6 +67,14 @@ const User: React.FC = () => {
   useEffect(() => {
     fetchOrders();
     fetchStatusOrders();
+<<<<<<< Updated upstream
+=======
+
+    const interval = setInterval(() => {
+      checkForStatusChange();
+    }, 1000); // Check every 4 seconds
+return () => clearInterval(interval); // Cleanup on unmount
+>>>>>>> Stashed changes
   }, []);
 
   const renderOrders = () => {
@@ -147,7 +155,7 @@ const User: React.FC = () => {
             </p>
             <p className="font-semibold mb-2">
               Số điện thoại: <span className="font-normal">{order.phoneNumber}</span>
-            </p>
+</p>
             <p className="font-semibold mb-2">
               Email: <span className="font-normal">{order.email}</span>
             </p>

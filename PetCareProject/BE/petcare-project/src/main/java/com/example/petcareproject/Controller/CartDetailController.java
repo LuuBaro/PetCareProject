@@ -45,10 +45,17 @@ public class CartDetailController {
     @PutMapping("/update")
     public ResponseEntity<?> updateCartItem(@RequestBody CartDetailRequestDTO cartDetailDTO) {
         try {
+            // Log dữ liệu nhận từ frontend
+            System.out.println("ProductDetailId: " + cartDetailDTO.getProductDetailId());
+            System.out.println("QuantityItem: " + cartDetailDTO.getQuantityItem());
+            System.out.println("UserId: " + cartDetailDTO.getUserId());
+
+            // Kiểm tra dữ liệu truyền vào, nếu thiếu thì trả về lỗi 400
             if (cartDetailDTO.getProductDetailId() == null || cartDetailDTO.getUserId() == null) {
-                return ResponseEntity.status(400).body("Thiếu thông tin cần thiết.");
+                return ResponseEntity.status(400).body("Thiếu ProductDetailId hoặc UserId.");
             }
 
+            // Cập nhật giỏ hàng
             CartDetail updatedCartDetail = cartDetailService.updateCartItem(
                     cartDetailDTO.getProductDetailId(),
                     cartDetailDTO.getQuantityItem(),
@@ -59,6 +66,8 @@ public class CartDetailController {
             return ResponseEntity.status(400).body(e.getMessage());
         }
     }
+
+
 
 
     @DeleteMapping("/remove/{cartDetailId}")

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Header from "../header/Header";
-
+import toastr from "toastr";
+import ProductDetail from "../ProductDetail/productDetail";
 interface Product {
   cartDetailId: number;
   productId: number;
@@ -52,7 +53,6 @@ const Cart: React.FC = () => {
       setLoading(false);
     }
   };
-
   const handleRemoveItem = async (cartDetailId: number) => {
     try {
       await axios.delete(
@@ -70,34 +70,76 @@ const Cart: React.FC = () => {
     }
   };
 
-  const handleQuantityChange = async (cartDetailId: number, quantityItem: number) => {
-    if (quantityItem < 1) return;
-  
-    // Update the product state with the new quantity
-    setProducts(
-      products.map((product) =>
-        product.cartDetailId === cartDetailId
-          ? { ...product, quantity: quantityItem }
-          : product
-      )
+  const handleQuantityChange = async (
+    cartDetailId: number,
+    quantityItem: number
+  ) => {
+    if (quantityItem < 1) return; // Không thực hiện nếu số lượng nhỏ hơn 1
+
+    const userId = localStorage.getItem("userId"); // Lấy userId từ localStorage
+
+    if (!userId) {
+      console.error("User is not logged in.");
+      return;
+    }
+
+    console.log("cartDetailId:", cartDetailId);
+    console.log("quantityItem:", quantityItem);
+    console.log("userId:", userId);
+
+    // Tìm sản phẩm tương ứng trong giỏ hàng
+    const product = products.find(
+      (product) => product.cartDetailId === cartDetailId
     );
-  
+    const productDetailId = product ? product.productId : null; // Lấy productDetailId từ sản phẩm
+
+    if (!productDetailId) {
+      console.error("ProductDetailId is missing!");
+      return;
+    }
+
+    // Lấy thông tin ProductDetail từ backend hoặc từ state nếu đã có
+    // Giả sử bạn có một hàm để lấy ProductDetail
+    const productDetailResponse = await axios.get(
+      `http://localhost:8080/api/product-details/${productDetailId}`
+    );
+    const productDetail = productDetailResponse.data;
+    const stockAvailable = productDetail ? productDetail.quantity : 0; // Lấy số lượng sản phẩm có sẵn từ ProductDetail
+    console.log(productDetail);
+    // Kiểm tra số lượng muốn cập nhật không được vượt quá số lượng có sẵn
+    if (quantityItem > stockAvailable) {
+      toastr.error(`Số lượng không được vượt quá ${stockAvailable}.`); // Thông báo lỗi
+      return; // Không thực hiện cập nhật nếu vượt quá số lượng có sẵn
+    }
+
     try {
-      // Send the update request to the server
       const response = await axios.put(
         `http://localhost:8080/api/cart/update`,
         {
-          cartDetailId: cartDetailId, // Use cartDetailId to match the backend
-          quantityItem: quantityItem,
+          productDetailId: productDetailId,
+          quantityItem: quantityItem, // Truyền số lượng mới
+          userId: userId,
         }
       );
-  
+
       if (response.status === 200) {
         console.log("Quantity updated successfully!");
+
+        // Cập nhật trạng thái sản phẩm với số lượng mới
+        setProducts((prevProducts) =>
+          prevProducts.map(
+            (product) =>
+              product.cartDetailId === cartDetailId
+                ? { ...product, quantity: quantityItem } // Cập nhật số lượng
+                : product // Giữ nguyên các sản phẩm khác
+          )
+        );
       }
     } catch (error) {
-      setError("An error occurred while updating the product quantity.");
-      console.error("Error updating quantity:", error);
+      console.error(
+        "Error updating quantity:",
+        error.response ? error.response.data : error.message
+      );
     }
   };
 
