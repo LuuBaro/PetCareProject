@@ -40,9 +40,9 @@ const Checkout: React.FC = () => {
         const queryParams = new URLSearchParams(location.search);
         const responseCode = queryParams.get("vnp_ResponseCode");
 
-        if (responseCode) {
-            handleVNPayResponse(responseCode);
-        }
+        // if (responseCode) {
+        //     handleVNPayResponse(responseCode);
+        // }
         fetchFirstAddress();
         // fetchShippingFee();
     }, [userId, location.search, refreshCheckout, address]);
@@ -82,96 +82,120 @@ const Checkout: React.FC = () => {
         console.log("Giỏ hàng đã được xóa sau khi thanh toán thành công.");
     };
 
-    const handleVNPayResponse = async (responseCode: string) => {
-        if (responseCode === "00") {  // Payment was successful
-            try {
-                const queryParams = new URLSearchParams(location.search);
-                const response = await fetch(`http://localhost:8080/api/payment-result?${queryParams.toString()}`, {
-                    method: "GET",
-                    headers: {
-                        "Authorization": `Bearer ${token}`,
-                    },
-                });
+    // const handleVNPayResponse = async (responseCode: string) => {
+    //     if (responseCode === "00") {  // Payment was successful
+    //         try {
+    //             const queryParams = new URLSearchParams(location.search);
+    //             const response = await fetch(`http://localhost:8080/api/payment-result?${queryParams.toString()}`, {
+    //                 method: "GET",
+    //                 headers: {
+    //                     "Authorization": `Bearer ${token}`,
+    //                 },
+    //             });
 
-                if (response.redirected) {
-                    window.location.href = response.url;
-                    return;
-                }
+    //             if (response.redirected) {
+    //                 window.location.href = response.url;
+    //                 return;
+    //             }
 
-                if (response.ok) {
-                    Swal.fire({
-                        title: "Thanh toán thành công!",
-                        text: "Cảm ơn bạn đã đặt hàng. Đơn hàng của bạn sẽ được xử lý ngay.",
-                        icon: "success",
-                        confirmButtonText: "OK",
-                    }).then(() => {
-                        clearCartAfterCheckout();
-                        navigate("/user");
-                    });
-                }
-            } catch (error) {
-                console.error("Error fetching VNPay return result:", error);
-                Swal.fire({
-                    title: "Thanh toán thất bại!",
-                    text: "Vui lòng thử lại.",
-                    icon: "error",
-                    confirmButtonText: "OK",
-                }).then(() => {
-                    navigate("/checkout");
-                });
-            }
-        } else {
-            Swal.fire({
-                title: "Thanh toán thất bại!",
-                text: "Vui lòng thử lại.",
-                icon: "error",
-                confirmButtonText: "OK",
-            }).then(() => {
-                navigate("/checkout");
-            });
-        }
-    };
+    //             if (response.ok) {
+    //                 Swal.fire({
+    //                     title: "Thanh toán thành công!",
+    //                     text: "Cảm ơn bạn đã đặt hàng. Đơn hàng của bạn sẽ được xử lý ngay.",
+    //                     icon: "success",
+    //                     confirmButtonText: "OK",
+    //                 }).then(() => {
+    //                     clearCartAfterCheckout();
+    //                     navigate("/user");
+    //                 });
+    //             }
+    //         } catch (error) {
+    //             console.error("Error fetching VNPay return result:", error);
+    //             Swal.fire({
+    //                 title: "Thanh toán thất bại!",
+    //                 text: "Vui lòng thử lại.",
+    //                 icon: "error",
+    //                 confirmButtonText: "OK",
+    //             }).then(() => {
+    //                 navigate("/checkout");
+    //             });
+    //         }
+    //     } else {
+    //         Swal.fire({
+    //             title: "Thanh toán thất bại!",
+    //             text: "Vui lòng thử lại.",
+    //             icon: "error",
+    //             confirmButtonText: "OK",
+    //         }).then(() => {
+    //             navigate("/checkout");
+    //         });
+    //     }
+    // };
 
     const handlePayment = async () => {
-        if (!address) {
-            Swal.fire("Vui lòng cung cấp địa chỉ giao hàng.");
-            return;
-        }
-
         if (!selectedPaymentMethod) {
-            Swal.fire("Vui lòng chọn phương thức thanh toán.");
+            Swal.fire({
+                icon: "warning",
+                title: "Thiếu phương thức thanh toán",
+                text: "Vui lòng chọn phương thức thanh toán.",
+            });
             return;
         }
-
-        const orderDTO = {
-            products: products.map((productDetail) => ({
-                productDetailId: productDetail.productId,
-                quantity: productDetail.quantity,
-                price: productDetail.price,
-                productName: productDetail.productName,
-            })),
-            total: total,
-            address: address,
-            userId: userId,
-            paymentMethod: selectedPaymentMethod,
-        };
-
+    
+    if (!address) {
+            Swal.fire({
+                icon: "warning",
+                title: "Thiếu địa chỉ",
+                text: "Vui lòng cung cấp địa chỉ giao hàng.",
+            });
+            return;
+        }
+    
+        if (products.length === 0) {
+            Swal.fire({
+                icon: "warning",
+                title: "Giỏ hàng trống",
+                text: "Giỏ hàng trống, không thể thanh toán.",
+            });
+            return;
+        }
+        console.log("Thông tin sản phẩm:", products);
+        console.log("Tổng tiền:", total);
+        console.log("Địa chỉ giao hàng:", address);
+        console.log("User ID:", userId);
+    
         if (selectedPaymentMethod === "cod") {
             try {
+                console.log("Đang tiến hành thanh toán COD...");
+    
                 const response = await fetch("http://localhost:8080/api/checkout", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
                         "Authorization": `Bearer ${token}`,
                     },
-                    body: JSON.stringify(orderDTO),
+                    body: JSON.stringify({
+                        products: products.map((productDetail) => ({
+                            productDetailId: productDetail.productId,
+                            quantity: productDetail.quantity,
+                            price: productDetail.price,
+                            productName: productDetail.productName,
+                        })),
+                        total: total,
+                        address: address,
+                        userId: userId,
+                        paymentMethod: "COD",
+                    }),
                 });
-
+    
                 if (!response.ok) {
                     const errorText = await response.text();
+                    console.log("Lỗi khi thanh toán COD:", errorText); // Log lỗi nếu thanh toán thất bại
                     throw new Error(`Thanh toán thất bại: ${errorText}`);
                 }
-
+    
+                console.log("Thanh toán COD thành công!"); // Log khi thanh toán thành công
+    
                 Swal.fire({
                     title: "Thanh toán thành công!",
                     text: "Cảm ơn bạn đã đặt hàng. Đơn hàng của bạn sẽ được xử lý ngay.",
@@ -182,34 +206,63 @@ const Checkout: React.FC = () => {
                     navigate("/user");
                 });
             } catch (error) {
-                console.error("Lỗi khi thanh toán:", error);
-                Swal.fire("Thanh toán thất bại: " + error.message);
+                console.error("Lỗi khi thanh toán COD:", error);
+                alert(`Thanh toán thất bại: ${error.message}`);
             }
         } else if (selectedPaymentMethod === "vnpay") {
             try {
-                const response = await fetch("http://localhost:8080/api/pay", {
+                console.log("Đang tiến hành thanh toán VNPay...");
+    
+                // VNPay
+                const response1 = await fetch("http://localhost:8080/api/pay", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
                         "Authorization": `Bearer ${token}`,
                     },
-                    body: JSON.stringify(orderDTO),
+                    body: JSON.stringify({
+                        amount: total + 15000,
+                        returnUrl: "http://localhost:5173/user",
+                    }),
                 });
-
-                const paymentUrl = await response.text();  // Expect plain text response
-
-                if (response.ok && paymentUrl) {
-                    window.location.href = paymentUrl;
-                } else {
-                    throw new Error("VNPay payment URL not provided.");
+    
+                if (!response1.ok) {
+                    const errorText = await response1.text();
+                    console.log("Lỗi khi gửi yêu cầu thanh toán VNPay:", errorText); // Log lỗi nếu yêu cầu thất bại
+                    throw new Error(`VNPay Payment failed: ${errorText}`);
                 }
+    
+                const response2 = await fetch("http://localhost:8080/api/checkout", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({
+                        products: products.map((productDetail) => ({
+                            productDetailId: productDetail.productId,
+                            quantity: productDetail.quantity,
+                            price: productDetail.price,
+                            productName: productDetail.productName,
+                        })),
+                        total: total,
+                        address: address,
+                        userId: userId,
+                        paymentMethod: "VNPAY",
+                    }),
+                });
+    
+                const data = await response1.json();
+                console.log("VNPay Payment URL:", data.paymentUrl); // Log URL của VNPay
+                const paymentUrl = data.paymentUrl;
+                window.location.href = paymentUrl; // Chuyển hướng tới trang thanh toán VNPay
             } catch (error) {
-                console.error("Error in VNPay payment:", error);
-                Swal.fire("Thanh toán VNPay thất bại: " + error.message);
+                console.error("Lỗi khi thanh toán VNPay:", error);
+                alert(`Thanh toán VNPay thất bại: ${error.message}`);
             }
         }
     };
-
+    
 
     const openModal = () => setModalIsOpen(true);
     const closeModal = () => setModalIsOpen(false);
