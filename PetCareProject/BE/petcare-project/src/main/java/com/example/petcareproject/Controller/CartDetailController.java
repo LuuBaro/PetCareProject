@@ -45,6 +45,11 @@ public class CartDetailController {
     @PutMapping("/update")
     public ResponseEntity<?> updateCartItem(@RequestBody CartDetailRequestDTO cartDetailDTO) {
         try {
+            // Log dữ liệu nhận từ frontend
+            System.out.println("ProductDetailId: " + cartDetailDTO.getProductDetailId());
+            System.out.println("QuantityItem: " + cartDetailDTO.getQuantityItem());
+            System.out.println("UserId: " + cartDetailDTO.getUserId());
+
             if (cartDetailDTO.getProductDetailId() == null || cartDetailDTO.getUserId() == null) {
                 return ResponseEntity.status(400).body("Thiếu thông tin cần thiết.");
             }

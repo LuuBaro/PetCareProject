@@ -104,8 +104,11 @@ const ProductDetail = () => {
 
   const handleAddToCart = async (productDetailId) => {
     const token = localStorage.getItem("token");
+
+    // Nếu chưa đăng nhập, điều hướng tới trang đăng nhập
     if (!token) {
       toastr.error("Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng.");
+      window.location.href = "/login"; // Điều hướng về trang đăng nhập
       return;
     }
 
@@ -116,15 +119,19 @@ const ProductDetail = () => {
     }
 
     try {
+      // Lấy tên sản phẩm từ product.productName
+      const productName = productDetail?.product?.productName;
+
       await CartService.addToCart(
           productDetailId,
           quantity,
           localStorage.getItem("userId"),
           token,
-          productDetail.productName,
+          productName, // Truyền tên sản phẩm đúng
           stockAvailable
       );
-      toastr.success("Sản phẩm đã được thêm vào giỏ hàng.");
+
+
     } catch (error) {
       console.error(error);
     }
@@ -153,7 +160,7 @@ const ProductDetail = () => {
   return (
       <>
         <Header />
-        <div className="container mx-auto my-10 p-8 bg-white shadow-lg rounded-lg">
+        <div className="container mx-32 w-auto my-10 p-8 bg-white shadow-lg rounded-lg">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {/* Product Image Section */}
             <div className="flex justify-center items-center">

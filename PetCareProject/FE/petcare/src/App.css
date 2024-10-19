@@ -178,3 +178,10 @@ body {
   max-height: 400px;
   overflow-y: auto; /* Scroll nếu nội dung quá dài */
 }
+
+#toast-container {
+  position: fixed !important; /* Đảm bảo thông báo luôn cố định */
+  top: calc(60px + 10px) !important; /* 60px là chiều cao của header, +10px để tạo khoảng cách */
+  right: 20px !important; /* Điều chỉnh khoảng cách từ cạnh phải của trang */
+  z-index: 9999 !important; /* Đảm bảo toastr luôn ở trên các thành phần khác */
+}

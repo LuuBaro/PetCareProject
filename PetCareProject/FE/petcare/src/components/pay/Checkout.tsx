@@ -22,7 +22,6 @@ const Checkout: React.FC = () => {
     const total: number = location.state?.total || 0;
     const [refreshCheckout, setRefreshCheckout] = useState(0);
     // const [shippingFee, setShippingFee] = useState<number>(0);
-
     const userId = localStorage.getItem("userId");
     const token = localStorage.getItem("token");
 
@@ -35,42 +34,41 @@ const Checkout: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [paymentModalOpen, setPaymentModalOpen] = useState(false);
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("");
-
+    const [vnpResponseCode, setVnpResponseCode] = useState<string | null>(null);
 
     useEffect(() => {
-        const fetchFirstAddress = async () => {
-            setLoading(true);
-            try {
-                const response = await fetch(`http://localhost:8080/api/addresses/first?userId=${userId}`);
+        const queryParams = new URLSearchParams(location.search);
+        const responseCode = queryParams.get("vnp_ResponseCode");
 
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error(`Error fetching address. Status: ${response.status}, Message: ${errorText}`);
-                    throw new Error("Địa chỉ không tìm thấy");
-                }
-
-                const contentType = response.headers.get("content-type");
-
-                if (contentType && contentType.indexOf("application/json") !== -1) {
-                    const data = await response.json();
-                    setAddress(data.fullAddress);
-
-                    // const fee = await calculateShippingFee(data.districtId, data.wardCode, 1000, 20, 20, 20);
-                    // setShippingFee(fee);
-                } else {
-                    console.error("Expected JSON, but received:", await response.text());
-                    throw new Error("Định dạng phản hồi không hợp lệ");
-                }
-            } catch (error) {
-                console.error("Error fetching first address:", error);
-                alert("Không thể kết nối đến server.");
-            } finally {
-                setLoading(false);
-            }
-        };
-
+        if (responseCode) {
+            handleVNPayResponse(responseCode);
+        }
         fetchFirstAddress();
-    }, [userId, refreshCheckout]);
+        // fetchShippingFee();
+    }, [userId, location.search, refreshCheckout, address]);
+
+    // const fetchShippingFee = async () => {
+    //     if (address) {
+    //         const fee = await calculateShippingFee(address); // Assuming address has the required data for calculation
+    //         setShippingFee(fee);
+    //     }
+    // };
+
+    const fetchFirstAddress = async () => {
+        setLoading(true);
+        try {
+            const response = await fetch(`http://localhost:8080/api/addresses/first?userId=${userId}`);
+            if (!response.ok) throw new Error(`Error fetching address: ${response.statusText}`);
+
+            const data = await response.json();
+            setAddress(data.fullAddress);
+        } catch (error) {
+            console.error("Error fetching address:", error);
+            alert("Could not fetch address.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const formatPrice = (price: number): string => {
         return new Intl.NumberFormat("vi-VN", {
@@ -84,21 +82,79 @@ const Checkout: React.FC = () => {
         console.log("Giỏ hàng đã được xóa sau khi thanh toán thành công.");
     };
 
+    const handleVNPayResponse = async (responseCode: string) => {
+        if (responseCode === "00") {  // Payment was successful
+            try {
+                const queryParams = new URLSearchParams(location.search);
+                const response = await fetch(`http://localhost:8080/api/payment-result?${queryParams.toString()}`, {
+                    method: "GET",
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                    },
+                });
+
+                if (response.redirected) {
+                    window.location.href = response.url;
+                    return;
+                }
+
+                if (response.ok) {
+                    Swal.fire({
+                        title: "Thanh toán thành công!",
+                        text: "Cảm ơn bạn đã đặt hàng. Đơn hàng của bạn sẽ được xử lý ngay.",
+                        icon: "success",
+                        confirmButtonText: "OK",
+                    }).then(() => {
+                        clearCartAfterCheckout();
+                        navigate("/user");
+                    });
+                }
+            } catch (error) {
+                console.error("Error fetching VNPay return result:", error);
+                Swal.fire({
+                    title: "Thanh toán thất bại!",
+                    text: "Vui lòng thử lại.",
+                    icon: "error",
+                    confirmButtonText: "OK",
+                }).then(() => {
+                    navigate("/checkout");
+                });
+            }
+        } else {
+            Swal.fire({
+                title: "Thanh toán thất bại!",
+                text: "Vui lòng thử lại.",
+                icon: "error",
+                confirmButtonText: "OK",
+            }).then(() => {
+                navigate("/checkout");
+            });
+        }
+    };
+
     const handlePayment = async () => {
         if (!address) {
-            alert("Vui lòng cung cấp địa chỉ giao hàng.");
+            Swal.fire("Vui lòng cung cấp địa chỉ giao hàng.");
             return;
         }
 
-        if (products.length === 0) {
-            alert("Giỏ hàng trống, không thể thanh toán.");
+        if (!selectedPaymentMethod) {
+            Swal.fire("Vui lòng chọn phương thức thanh toán.");
             return;
         }
 
-        console.log("Thông tin sản phẩm:", products);
-        console.log("Tổng tiền:", total);
-        console.log("Địa chỉ giao hàng:", address);
-        console.log("User ID:", userId);
+        const orderDTO = {
+            products: products.map((productDetail) => ({
+                productDetailId: productDetail.productId,
+                quantity: productDetail.quantity,
+                price: productDetail.price,
+                productName: productDetail.productName,
+            })),
+            total: total,
+            address: address,
+            userId: userId,
+            paymentMethod: selectedPaymentMethod,
+        };
 
         if (selectedPaymentMethod === "cod") {
             try {
@@ -108,18 +164,7 @@ const Checkout: React.FC = () => {
                         "Content-Type": "application/json",
                         "Authorization": `Bearer ${token}`,
                     },
-                    body: JSON.stringify({
-                        products: products.map((productDetail) => ({
-                            productDetailId: productDetail.productId,
-                            quantity: productDetail.quantity,
-                            price: productDetail.price,
-                            productName: productDetail.productName,
-                        })),
-                        total: total,
-                        address: address,
-                        userId: userId,
-                        paymentMethod: "COD",
-                    }),
+                    body: JSON.stringify(orderDTO),
                 });
 
                 if (!response.ok) {
@@ -138,98 +183,58 @@ const Checkout: React.FC = () => {
                 });
             } catch (error) {
                 console.error("Lỗi khi thanh toán:", error);
-                alert(`Thanh toán thất bại: ${error.message}`);
+                Swal.fire("Thanh toán thất bại: " + error.message);
             }
         } else if (selectedPaymentMethod === "vnpay") {
             try {
-                //VNPay
-                const response1 = await fetch("http://localhost:8080/api/pay", {
+                const response = await fetch("http://localhost:8080/api/pay", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
                         "Authorization": `Bearer ${token}`,
                     },
-                    body: JSON.stringify({
-                        amount: total + 15000,
-                        returnUrl: "http://localhost:5173/user",
-                    }),
+                    body: JSON.stringify(orderDTO),
                 });
 
-                const response2 = await fetch("http://localhost:8080/api/checkout", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${token}`,
-                    },
-                    body: JSON.stringify({
-                        products: products.map((productDetail) => ({
-                            productDetailId: productDetail.productId,
-                            quantity: productDetail.quantity,
-                            price: productDetail.price,
-                            productName: productDetail.productName,
-                        })),
-                        total: total,
-                        address: address,
-                        userId: userId,
-                        paymentMethod: "VNPAY",
-                    }),
-                });
+                const paymentUrl = await response.text();  // Expect plain text response
 
-                if (!response1.ok) {
-                    const errorText = await response1.text();
-                    throw new Error(`VNPay Payment failed: ${errorText}`);
+                if (response.ok && paymentUrl) {
+                    window.location.href = paymentUrl;
+                } else {
+                    throw new Error("VNPay payment URL not provided.");
                 }
-
-                const data = await response1.json();
-                const paymentUrl = data.paymentUrl;
-                window.location.href = paymentUrl; // Redirect to VNPay payment page
             } catch (error) {
                 console.error("Error in VNPay payment:", error);
-                alert(`Thanh toán VNPay thất bại: ${error.message}`);
+                Swal.fire("Thanh toán VNPay thất bại: " + error.message);
             }
         }
     };
 
-    const openModal = () => {
-        setModalIsOpen(true);
-    };
 
-    const closeModal = () => {
-        setModalIsOpen(false);
-    };
+    const openModal = () => setModalIsOpen(true);
+    const closeModal = () => setModalIsOpen(false);
 
     const saveAddress = async (newAddress: any) => {
-        const {fullAddress, ward, district, province, street} = newAddress;
-        const formattedFullAddress = `${street}, ${ward}, ${district}, ${province}`;
+        const formattedFullAddress = `${newAddress.street}, ${newAddress.ward}, ${newAddress.district}, ${newAddress.province}`;
 
         try {
             const response = await fetch("http://localhost:8080/api/addresses", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({
-                    userId: userId,
+                    userId,
                     fullAddress: formattedFullAddress,
-                    street: street,
-                    ward: ward,
-                    district: district,
-                    province: province,
+                    ...newAddress,
                 }),
             });
 
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error("Error saving address:", errorText);
-                alert("Đã xảy ra lỗi khi lưu địa chỉ.");
-                return;
-            }
+            if (!response.ok) throw new Error("Failed to save address.");
 
             setAddress(formattedFullAddress);
             closeModal();
         } catch (error) {
-            console.error("Lỗi khi lưu địa chỉ:", error);
-            alert("Không thể kết nối đến server.");
+            console.error("Error saving address:", error);
+            alert("Could not save address.");
         }
     };
 
@@ -365,10 +370,11 @@ const Checkout: React.FC = () => {
                                 <div className="payment-option">
                                     <label>
                                         <input
-                                            type="checkbox"
+                                            type="radio"
+                                            name="paymentMethod"
                                             checked={selectedPaymentMethod === "cod"}
                                             onChange={() => setSelectedPaymentMethod("cod")}
-                                            className="mr-2" // Adds spacing between checkbox and label
+                                            className="mr-2"
                                         />
                                         Thanh toán khi nhận hàng
                                     </label>
@@ -378,7 +384,8 @@ const Checkout: React.FC = () => {
                                 <div className="payment-option mt-2">
                                     <label>
                                         <input
-                                            type="checkbox"
+                                            type="radio"
+                                            name="paymentMethod"
                                             checked={selectedPaymentMethod === "vnpay"}
                                             onChange={() => setSelectedPaymentMethod("vnpay")}
                                             className="mr-2"

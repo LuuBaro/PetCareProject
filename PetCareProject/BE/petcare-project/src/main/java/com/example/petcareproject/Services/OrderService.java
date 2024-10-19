@@ -21,7 +21,6 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 @Service
 public class OrderService {
 
-
     @Autowired
     private ProductDetailRepository productDetailRepository;
 
@@ -349,8 +348,6 @@ public class OrderService {
         }
     }
 
-
-
     public void cancelOrder(Long orderId) {
         // Lấy đơn hàng từ cơ sở dữ liệu
         Order order = orderRepository.findById(orderId)
@@ -362,8 +359,6 @@ public class OrderService {
         order.setStatusOrder(cancelStatus);
         orderRepository.save(order);
     }
-
-
 
     public void processOrderCancellation(Long orderId, String cancelReason) {
         // Hủy đơn hàng
@@ -377,14 +372,6 @@ public class OrderService {
             // Bạn có thể xử lý lỗi hoặc ghi log tại đây
         }
     }
-
-
-
-
-
-
-
-
 }
 
 

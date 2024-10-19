@@ -140,7 +140,7 @@ export default function Header() {
                 </button>
 
                 {isOpen && (
-                  <ul className="absolute w-[200px] right-[-30px] mt-2 border-gray-500 bg-blue-100 text-black rounded-md shadow-lg z-10">
+                  <ul className="absolute w-[200px] right-[-30px] mt-2 border-gray-500 bg-blue-100 text-black rounded-md shadow-lg z-50">
                     <li className="hover:text-[#00B7C0] transition ease-out duration-200 p-1">
                       <Link to="/user">
                       <button className="px-4 py-2 flex items-center justify-center gap-2" >
