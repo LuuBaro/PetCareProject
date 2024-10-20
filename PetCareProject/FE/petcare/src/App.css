@@ -1,0 +1,187 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+#root {
+  max-width: 100%;
+  margin: 0 auto;
+}
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 12px;
+}
+*,
+*:before,
+*:after {
+  box-sizing: border-box;
+}
+* {
+  margin: 0;
+  padding: 0;
+  font: inherit;
+}
+img,
+picture,
+svg,
+video {
+  display: block;
+  max-width: 100%;
+}
+input,
+select,
+textarea {
+  background-color: transparent;
+  outline: none;
+}
+button {
+  cursor: pointer;
+  background-color: transparent;
+  outline: none;
+  border: 0;
+}
+body {
+  min-height: 100vh;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1;
+  font-family: "Roboto", sans-serif;
+  background-color: #fafafa;
+}
+.slider-wrapper {
+  overflow: hidden;
+  width: 100%;
+}
+.slider-container {
+  display: flex;
+  transition: transform 0.5s ease-in-out;
+  width: 100%;
+}
+.slider-container > div {
+  min-width: calc(100% / 6);
+}
+.item-container {
+  text-align: center;
+}
+.image-rotate {
+  transition: transform 0.5s ease-in-out;
+}
+.text-change {
+  transition: color 0.3s ease-in-out;
+}
+.item-container:hover .image-rotate {
+  transform: rotateY(360deg);
+}
+.item-container:hover .text-change {
+  color: #00b7c0;
+}
+
+.clip-path-parallelogram {
+  clip-path: polygon(0 0, 95% 0, 100% 100%, 5% 100%);
+}
+
+.toast-top-right-custom {
+  top: 70px;
+  right: 0; /* Thay đổi giá trị này để điều chỉnh độ cao */
+}
+
+/* Custom radio button */
+.custom-radio input[type="radio"] {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #00b7c0;
+  border-radius: 50%;
+  position: relative;
+  cursor: pointer;
+}
+
+.custom-radio input[type="radio"]:checked::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  background-color: #00b7c0;
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.page-item {
+  margin: 0 5px;
+}
+
+.page-link {
+  width: 35px;
+  height: 35px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  border: 1px solid #ccc;
+  color: #333;
+  text-decoration: none;
+  transition: background-color 0.3s, border-color 0.3s;
+}
+
+.page-link:hover {
+  border-color: #00b7c0;
+  background-color: #f0f0f0;
+}
+
+.active .page-link {
+  border-color: #b07f43;
+  background-color: #f0f0f0;
+  color: #b07f43;
+  font-weight: bold;
+}
+
+.prev-item .page-link,
+.next-item .page-link {
+  border: none;
+  background-color: transparent;
+}
+
+.disabled .page-link {
+  color: #ccc;
+  pointer-events: none;
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e5e5e5;
+  padding-bottom: 10px;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.modal-body {
+  padding-top: 20px;
+  max-height: 400px;
+  overflow-y: auto; /* Scroll nếu nội dung quá dài */
+}
+
+#toast-container {
+  position: fixed !important; /* Đảm bảo thông báo luôn cố định */
+  top: calc(60px + 10px) !important; /* 60px là chiều cao của header, +10px để tạo khoảng cách */
+  right: 20px !important; /* Điều chỉnh khoảng cách từ cạnh phải của trang */
+  z-index: 9999 !important; /* Đảm bảo toastr luôn ở trên các thành phần khác */
+}

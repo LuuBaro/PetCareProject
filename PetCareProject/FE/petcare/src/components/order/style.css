@@ -1,0 +1,38 @@
+.status-dxl {
+    background-color: rgb(254 249 195);
+    color: rgb(161 98 7)
+}
+
+.status-dg {
+    @apply bg-orange-100 text-orange-700
+}
+
+.status-dag {
+    @apply bg-green-100 text-green-700
+}
+
+.status-ht {
+    @apply bg-green-100 text-green-700
+}
+
+.status-dh {
+    @apply bg-red-100 text-red-700
+}
+
+.status-Tra_hang_Hoan_tien {
+    @apply bg-purple-100 text-purple-700
+}
+
+.order-item {
+    height: 80px;
+    overflow: hidden;
+}
+
+.order-item h3 {
+    max-height: 40px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}

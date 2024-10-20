@@ -1,0 +1,62 @@
+[
+  {
+    "id": 1,
+    "status": "Đang xử lý",
+    "shopName": "TroTCase - Phụ Kiện Điện T...",
+    "items": [
+      {
+        "name": "Ốp lưng điện thoại Samsung Note Fe / S6 / S7 / S8 Edge / S7 Edge / Note 5 - in hình vũ trụ và âm h...",
+        "variant": "HC237, Note 5",
+        "price": 31500,
+        "quantity": 1,
+        "imageUrl": "https://via.placeholder.com/80"
+      },
+      {
+        "name": "Ốp lưng điện thoại Samsung Note Fe / S6 / S7 / S8 Edge / S7 Edge / Note 5 - in hình vũ trụ và âm h...",
+        "variant": "HC242, Note 5",
+        "price": 31500,
+        "quantity": 1,
+        "imageUrl": "https://via.placeholder.com/80"
+      },
+      {
+        "name": "POP - Iring tròn dán lưng điện thoại, đỡ điện thoại, chống đỡ - chọn ngẫu nhiên - Shop tự chọn",
+        "variant": null,
+        "price": 0,
+        "quantity": 1,
+        "isGift": true,
+        "imageUrl": "https://via.placeholder.com/80"
+      }
+    ],
+    "total": 65500
+  },
+  {
+    "id": 2,
+    "status": "Đã giao",
+    "shopName": "Shop B",
+    "items": [
+      {
+        "name": "Sản phẩm A",
+        "variant": "Màu đỏ",
+        "price": 250000,
+        "quantity": 2,
+        "imageUrl": "https://via.placeholder.com/80"
+      }
+    ],
+    "total": 500000
+  },
+  {
+    "id": 3,
+    "status": "Hoàn thành",
+    "shopName": "Shop C",
+    "items": [
+      {
+        "name": "Sản phẩm X",
+        "variant": null,
+        "price": 1000000,
+        "quantity": 1,
+        "imageUrl": "https://via.placeholder.com/80"
+      }
+    ],
+    "total": 1000000
+  }
+]
