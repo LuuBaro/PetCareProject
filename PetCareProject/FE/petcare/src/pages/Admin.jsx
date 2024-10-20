@@ -14,6 +14,9 @@ import ManageProductImages from "../components/Manage/ManageProductImages";
 import ProductSizeManager from "../components/Manage/ManageProductSizes";
 import ManageWeights from "../components/Manage/ManageWeights";
 import ManageInventory from "../components/Manage/ManageInventory";
+import ManageRole from "../components/Manage/ManageRole";
+
+
 
 function Admin() {
   return (
@@ -41,6 +44,7 @@ function Admin() {
               {/* Add more routes as needed */}
               <Route path="/brands" element={<ManageBrand />} /> {/* Add this route */}
               <Route path="/user" element={<UserManagement />} /> {/* Add this route */}
+              <Route path="/roles" element={<ManageRole />} /> {/* Add this route */}
               <Route path="/product-details" element={<ProductDetailManager />} /> {/* Add this route */}
               <Route path="/product-color" element={<ManageProductColors />} /> {/* Add this route */}
               <Route path="/product-image" element={<ManageProductImages />} /> {/* Add this route */}

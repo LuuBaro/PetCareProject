@@ -58,6 +58,9 @@
                                     "/api/pay/**",
                                     "/api/create-payment/**",
                                     "/api/payment-result/**",
+                                    "/api/roles/**",
+                                    "/api/users/**",
+                                    "/api/user_role/**",
                                     "/css/**",
                                     "/js/**",
                                     "/"

@@ -22,6 +22,12 @@ const SidebarMenu = () => {
                         </Link>
                     </li>
                     <li className="p-4 flex items-center hover:bg-indigo-600 hover:text-white cursor-pointer transition-colors duration-300">
+                        <Link to="/roles">
+                            
+                            Quản lý Role
+                        </Link>
+                    </li>
+                    <li className="p-4 flex items-center hover:bg-indigo-600 hover:text-white cursor-pointer transition-colors duration-300">
                         <Link to="/products">
                            
                             Quản lý sản phẩm

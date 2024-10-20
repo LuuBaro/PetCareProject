@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.util.Date;
+import java.util.Set;
 
 @Data
 @Entity
@@ -20,4 +21,12 @@ public class User {
     private String phone;
     private Date registrationDate;
     private double totalSpent;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "user_roles",
+            joinColumns = @JoinColumn(name = "userId"),
+            inverseJoinColumns = @JoinColumn(name = "roleId")
+    )
+    private Set<Role> userRoles; // Hoặc List<Role>
 }
